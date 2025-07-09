@@ -1,0 +1,70 @@
+﻿@model List<Product>
+@{
+    ViewData["Title"] = "Product List";
+}
+
+<!-- Bootstrap Table -->
+<section class="py-5">
+    <div class="container">
+        <div class="d-flex py-4 justify-content-between align-content-center">
+            <h2 class="text-center mb-4">Product Inventory</h2>
+            <div>
+                <a class="btn btn-primary" asp-controller="Product" asp-action="Create">Create Product</a>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Id</th>
+                        <th scope="col">Image</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Price</th>
+                        <th scope="col">Ratings</th>
+                        <th scope="col">Stock</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var product = Model[i];
+                        <tr>
+                            <th scope="row">@(i + 1)</th>
+                            <td>
+                                <img src="@product.ImageUrl" alt="@product.Title" class="img-thumbnail"
+                                    style="  object-fit: cover; height:100px;">
+                            </td>
+                            <td>@product.Title</td>
+                            <td>@(product.Category?.Name.ToString())</td>
+                            <td class="text-primary fw-semibold">$@product.Price.ToString("0.00")</td>
+                            <td style="width: 120px;">
+                                @for (int star = 1; star <= 5; star++)
+                                {
+                                    if (star <= product.Ratings)
+                                    {
+                                        <i class="bi bi-star-fill text-warning"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-muted"></i>
+                                    }
+                                }
+                            </td>
+                            <td>@product.Quantity</td>
+                            <td style="width: 180px;">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-success">View</a>
+                                <a asp-controller="Product" asp-action="Edit" asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-warning">Edit</a>
+                                <a asp-controller="Product" asp-action="Delete" asp-route-id="@product.Id"
+                                    class="btn btn-sm btn-danger">Delete</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

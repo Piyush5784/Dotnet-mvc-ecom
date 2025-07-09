@@ -1,0 +1,26 @@
+﻿@model Category
+
+<div class="container mt-4">
+    <form method="post" class="p-4 bg-light rounded shadow-sm max-w-lg">
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="DisplayOrder" class="form-label"></label>
+            <input asp-for="DisplayOrder" class="form-control" />
+            <span asp-validation-for="DisplayOrder" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Create</button>
+
+        <a asp-controller="Category" asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </form>
+</div>
+@section Scripts{
+    @{
+        <partial name="_ValidationScriptsPartial" />
+    }   
+}

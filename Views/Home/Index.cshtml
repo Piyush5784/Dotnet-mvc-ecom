@@ -1,0 +1,170 @@
+﻿@model List<Product>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<section class="">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mb-4">
+                <div id="heroCarousel" class="carousel slide carousel-container" data-bs-ride="carousel">
+                    <div class="carousel-indicators">
+                        @for (int i = 0; i < Math.Min(4, Model.Count); i++)
+                        {
+                            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="@i"
+                                class="@(i == 0 ? "active" : "")"></button>
+                        }
+                    </div>
+
+                    <div class="carousel-inner">
+                        @for (int i = 0; i < Math.Min(4, Model.Count); i++)
+                        {
+                            var product = Model[i];
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <div class="carousel-content">
+                                    <div class="carousel-text">
+                                        <div class="discount-badge ">30% Sale Off</div>
+                                        <h2 class="product-title">@(product.Title?.Length > 25 ? product.Description.Substring(0, 25) + "..." : product.Title)</h2>
+                                        <p class="product-description">
+                                            @(product.Description?.Length > 100 ? product.Description.Substring(0, 100) +
+                                                                                    "..." : product.Description)
+                                        </p>
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                            class="shop-now-btn">Shop Now</a>
+                                    </div>
+                                    <div class="carousel-image">
+                                        <img src="@product.ImageUrl" alt="@product.Title" class="carousel-image"/>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Cards -->
+            <div class="col-lg-4">
+
+                <!-- Default side cards if not enough products -->
+                <div class="side-card">
+                    <img src="https://m.media-amazon.com/images/I/71RDgtHsREL._SX679_.jpg" class="side-card-image" />
+                    <div class="side-card-content">
+                        <h3 class="side-card-title">MacBook Pro - 512/16GB</h3>
+                        <p class="side-card-offer">limited time offer</p>
+                        <div class="side-card-price">
+                            $450 <span class="side-card-original-price">$500</span>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section">
+    <div class="container">
+        <div class="row rounded-5 border">
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                    <h4 class="feature-title">Free Shipping</h4>
+                    <p class="feature-description">For all orders $200</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+                    <h4 class="feature-title">1 & 1 Returns</h4>
+                    <p class="feature-description">Cancellation after 1 day</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h4 class="feature-title">100% Secure Payments</h4>
+                    <p class="feature-description">Guarantee secure payments</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-headset"></i>
+                    </div>
+                    <h4 class="feature-title">24/7 Dedicated Support</h4>
+                    <p class="feature-description">Anywhere & anytime</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+<section class="products-section">
+    <div class="container">
+        @* <div class="col-lg-4"> *@
+        <h2 class="section-title">Featured Products</h2>
+        <div class="row">
+            @foreach (var product in Model.Skip(3).Take(6))
+            {
+                <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+
+                    <div class="side-card h-100 d-flex flex-column">
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                            <img src="@product.ImageUrl" class="side-card-image img-fluid" />
+                        </a>
+                        <div class="side-card-content p-3 flex-grow-1 d-flex flex-column justify-content-between">
+                            <h3 class="side-card-title h5">@product.Title</h3>
+                            <div class="mb-2 text-warning">
+                                @{
+                                    for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= product.Ratings)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+                                }
+                            </div>
+                            <p class="side-card-offer text-danger mb-1">Limited time offer</p>
+                            <div class="side-card-price fw-bold">
+                                $450 <span class="side-card-original-price text-decoration-line-through text-muted">$500</span>
+                            </div>
+                       
+                        </div>
+                         
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- See All Products Button -->
+        <div class="text-center mt-5">
+            <a asp-controller="Product" asp-action="Index" class="shop-now-btn">See All Products</a>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        // Auto-play carousel
+        var myCarousel = document.querySelector('#heroCarousel');
+        var carousel = new bootstrap.Carousel(myCarousel, {
+            interval: 5000,
+            wrap: true
+        });
+    </script>
+}

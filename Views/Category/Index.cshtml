@@ -1,0 +1,37 @@
+﻿@model List<Category>
+
+<div class="container mt-4">
+    <h1 class="mb-3">Categories List</h1>
+
+    <a class="btn btn-primary mb-3" asp-controller="Category" asp-action="Create">Add New Category</a>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-light">
+            <tr>
+                <th>Name</th>
+                <th>Display Order</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var cat in Model)
+            {
+                <tr>
+                    <td>@cat.Name</td>
+                    <td>@cat.DisplayOrder</td>
+                    <td>
+                        <div class="w-75 btn-group" role="group">
+                        <a asp-controller="Category" asp-route-id="@cat.Id" asp-action="Edit" class="btn btn-primary d-flex gap-2 align-items-center">
+                            <i class="bi bi-pencil-square"></i>Edit
+                        </a>
+
+                        <a asp-controller="Category" asp-route-id="@cat.Id" asp-action="Delete" class="btn btn-danger d-flex gap-2 align-items-center">
+                            <i class="bi bi-trash-fill"></i>Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

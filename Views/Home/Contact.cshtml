@@ -1,0 +1,44 @@
+﻿@model Contact
+@{
+    ViewData["Title"] = "Contact Us";
+}
+
+<h2 class="mt-4 mb-3 text-center">📬 Contact Us</h2>
+
+<div class="d-flex align-items-center justify-content-center">
+<form method="post" class="row g-3 needs-validation " style="max-width:500px;">
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label fw-semibold"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="PhoneNumber" class="form-label fw-semibold"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12">
+        <label asp-for="Email" class="form-label fw-semibold"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-12">
+        <label asp-for="Message" class="form-label fw-semibold"></label>
+        <textarea asp-for="Message" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Message" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-send me-2"></i>Send Message
+        </button>
+    </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

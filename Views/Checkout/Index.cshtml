@@ -1,0 +1,27 @@
+﻿@model List<VMart.Models.Cart>
+
+<h2>Confirm Your Order</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Product.Title</td>
+                <td>@item.Quantity</td>
+                <td>₹@item.Product.Price.ToString("F2")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<form asp-action="CreateCheckoutSession" method="post">
+    <button type="submit" class="btn btn-success">Pay with Stripe</button>
+</form>

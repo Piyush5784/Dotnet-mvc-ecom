@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using VMart.Data
+@inject UserManager<IdentityUser> userManager
+@inject ApplicationDbContext db
+
+
+@{
+    var user = await userManager.GetUserAsync(User);
+    int cartCount = 0;
+    if (user != null)
+    {
+        cartCount = await db.Cart
+            .Where(c => c.ApplicationUserId == user.Id)
+            .SumAsync(c => c.Quantity);
+    }
+}
+
+
+<div class="">
+    <a asp-controller="Cart" asp-action="Index" class="cart-link" title="Shopping Cart">
+        <div class="cart-icon">
+            <i class="bi bi-bag-heart-fill"></i>
+            @if (cartCount > 0)
+            {
+                <span class="cart-badge">
+                    @(cartCount > 99 ? "99+" : cartCount.ToString())
+                </span>
+            }
+        </div>
+        <span class="cart-text d-none d-lg-inline">Cart</span>
+    </a>
+</div>

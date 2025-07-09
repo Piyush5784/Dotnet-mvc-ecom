@@ -1,0 +1,88 @@
+﻿@using VMart.Utility
+@model List<VMart.Models.Order>
+
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<h2 class="mt-4 mb-3">📦 My Order History</h2>
+
+<p>Cancelled Order money will be automatically sent to bank after 3 days</p>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        You haven't placed any orders yet.
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Product</th>
+                    <th>Image</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Ordered On</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in Model)
+                {
+                    <tr>
+                        <td>@order.Product?.Title</td>
+                        <td style="width: 100px;">
+                            @if (!string.IsNullOrEmpty(order.Product?.ImageUrl))
+                            {
+                                <img src="@order.Product.ImageUrl" alt="@order.Product.Title" class="img-fluid rounded" style="max-height: 80px;" />
+                            }
+                            else
+                            {
+                                <span class="text-muted">No image</span>
+                            }
+                        </td>
+                        <td>@order.Quantity</td>
+                        <td>$@order.Price.ToString("F2")</td>
+                        <td>$@(order.Price* order.Quantity)</td>
+                        <td>
+                            <span class="badge bg-@(order.Status == SD.OrderStatusCancelled ? "secondary" : "success")">
+                                @order.Status
+                            </span>
+                        </td>
+                        <td>@order.OrderDate.ToString("MMM dd, yyyy hh:mm tt")</td>
+                       
+                        <td>
+                            @if (order.Status != SD.OrderStatusCancelled)
+                            {
+                                <form asp-controller="Order"
+                                      asp-action="CancelByUser"
+                                      asp-route-id="@order.Id"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to cancel this order? This action cannot be undone.');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            Cancel
+                                        </button>
+                                </form>
+
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm btn-secondary" disabled>
+                                    Already Cancelled
+                                </button>
+                            }
+                        </td>
+
+                       
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

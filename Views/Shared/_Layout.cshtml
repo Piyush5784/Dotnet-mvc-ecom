@@ -1,0 +1,120 @@
+﻿@using VMart.Utility
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopvia - @ViewData["Title"]</title>
+
+    <!-- Bootstrap and Site CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/VMart.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/custom.css" />
+
+    <!-- Icons & Toastr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css" />
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="navbar navbar-expand-lg modern-navbar border">
+            <div class="container">
+                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-bag-check-fill me-2"></i>Shopvia
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <!-- Left Nav -->
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Product" asp-action="Index">Shop</a>
+                        </li>
+                       
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Contact">Contact</a>
+                            </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="pagesDropdown" role="button" data-bs-toggle="dropdown">
+                                Pages
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                                 @if (User.IsInRole(SD.Role_User))
+                        {
+                                <li><a class="dropdown-item" asp-controller="Home" asp-action="Feedback">Feedback</a></li>
+                        } </ul>
+                        </li>
+
+                        @if (User.IsInRole(SD.Role_Admin))
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="manageDropdown" role="button" data-bs-toggle="dropdown">
+                                    Manage Content
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Product" asp-action="List">Manage Products</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Category" asp-action="Index">Manage Categories</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Order" asp-action="Manage">Manage Orders</a></li>
+                                    @* <li><a class="dropdown-item" asp-controller="Category" asp-action="Index">Manage Users</a></li>  *@
+                                    </ul>
+                            </li>
+                        }
+                    </ul>
+
+                    <!-- Right Actions -->
+                    <div class="user-actions d-flex align-items-center gap-2">
+                        @if (User.IsInRole(SD.Role_User))
+                        {
+                            <partial name="_CartIcon.cshtml" />
+
+                            <a asp-controller="Order" asp-action="Index" class="cart-link" title="Orders">
+                                <i class="bi bi-box-seam"></i>
+                                <span class="d-none d-lg-inline">Orders</span>
+                            </a>
+                        }
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container pt-5">
+        <main role="main" >
+            <partial name="_Notification" />
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border p-4 fixed-bottom bg-white mt-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 - Shopvia - Your Premium Shopping Destination</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> |
+                    <a asp-controller="Home" asp-action="Contact">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

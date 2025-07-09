@@ -1,0 +1,88 @@
+﻿@using VMart.Utility
+@model Product
+
+@{
+    ViewData["Title"] = @Model.Title;
+    bool isOutOfStock = Model.Quantity <= 0;
+}
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Product Image -->
+        <div class="col-md-6">
+            <img src="@Model.ImageUrl" alt="@Model.Title" class="card-img-top w-75 img-fluid" />
+        </div>
+
+        <!-- Product Info -->
+        <div class="col-md-6">
+            <h2 class="mb-3">@Model.Title</h2>
+
+            <p class="text-muted">@Model.Category?.Name</p>
+
+            <!-- Star Ratings -->
+            <div class="mb-3 text-warning">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <i class="bi @(i <= Model.Ratings ? "bi-star-fill" : "bi-star")"></i>
+                }
+                <span class="text-dark ms-2">(@Model.Ratings/5)</span>
+            </div>
+
+            <!-- Price -->
+            <h4 class="text-primary mb-3">$@Model.Price.ToString("0.00")</h4>
+
+            <!-- Description -->
+            <p class="mb-4">@Model.Description</p>
+
+            <!-- Quantity -->
+            <p class="fw-semibold">
+                @if (isOutOfStock)
+                {
+                    <span class="text-danger">Out of stock</span>
+                }
+                else
+                {
+                    <span class="text-success">@(Model.Quantity) item(s) available</span>
+                    
+                }
+            </p>
+
+            <!-- Buttons -->
+            <!-- Buttons -->
+            <div class="d-flex gap-3">
+              @if (User.Identity?.IsAuthenticated == true)
+{
+                        bool isDisabled = isOutOfStock || User.IsInRole(SD.Role_Admin);
+
+                        <a asp-controller="Cart"
+                           asp-action="AddToCart"
+                           asp-route-id="@Model.Id"
+                           class="btn btn-primary btn-lg @(isDisabled ? "disabled" : "")"
+                           disable=@(isDisabled ? "disabled" : "")>
+                            Add to Cart
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-area="Identity"
+                           asp-page="/Account/Login"
+                           class="btn btn-outline-primary btn-lg">
+                            Log in to Add to Cart
+                        </a>
+                    }
+
+                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                    Back to Products
+                </a>
+            </div>
+
+
+            @if (isOutOfStock)
+            {
+                <div class="alert alert-warning mt-4">
+                    This product is currently out of stock. Please check back soon!
+                </div>
+            }
+        </div>
+    </div>
+</div>
