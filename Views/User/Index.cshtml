@@ -1,0 +1,57 @@
+﻿@model List<UserViewModel>
+@using VMart.Utility
+
+<div class="container-fluid mt-4">
+    <h2 class="fw-semibold mb-3">Application Users</h2>
+
+    <div class="table-responsive shadow-sm">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-primary">
+                <tr class="text-center">
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Confirmed</th>
+                    <th>Phone</th>
+                    <th>Street</th>
+                    <th>City</th>
+                    <th>State</th>
+                    <th>Postal Code</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <i class="bi bi-envelope-fill text-muted me-1"></i>@item.User.Email
+                        </td>
+                        <td>
+                            <span class="badge bg-@(item.Role == SD.Role_Admin ? "dark" : "secondary")">
+                                @item.Role
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            @if (item.User.EmailConfirmed)
+                            {
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle-fill me-1"></i>Yes
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle-fill me-1"></i>No
+                                </span>
+                            }
+                        </td>
+                        <td>@item.User.PhoneNumber</td>
+                        <td>@item.User.StreetAddress</td>
+                        <td>@item.User.City</td>
+                        <td>@item.User.State</td>
+                        <td>@item.User.PostalCode</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

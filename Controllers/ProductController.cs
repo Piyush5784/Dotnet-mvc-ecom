@@ -69,16 +69,41 @@ namespace VMart.Controllers
         }
 
         [Authorize(Roles = SD.Role_Admin)]
-        public async Task<IActionResult> List()
+        [Authorize(Roles = SD.Role_Admin)]
+        public async Task<IActionResult> List(ProductFilterViewModel filter)
         {
             try
             {
-                var products = await db.Product.Include(p => p.Category).ToListAsync();
-                return View(products);
+                var productsQuery = db.Product.Include(p => p.Category).AsQueryable();
+
+                if (!string.IsNullOrEmpty(filter.Search))
+                    productsQuery = productsQuery.Where(p => p.Title.Contains(filter.Search));
+
+                if (filter.MaxPrice.HasValue)
+                    productsQuery = productsQuery.Where(p => p.Price <= filter.MaxPrice.Value);
+
+                if (filter.MinRating.HasValue)
+                    productsQuery = productsQuery.Where(p => p.Ratings >= filter.MinRating.Value);
+
+                if (!string.IsNullOrEmpty(filter.Category))
+                    productsQuery = productsQuery.Where(p => p.Category.Name == filter.Category);
+
+                switch (filter.SortBy)
+                {
+                    case "price-low": productsQuery = productsQuery.OrderBy(p => p.Price); break;
+                    case "price-high": productsQuery = productsQuery.OrderByDescending(p => p.Price); break;
+                    case "name": productsQuery = productsQuery.OrderBy(p => p.Title); break;
+                    default: productsQuery = productsQuery.OrderBy(p => p.Id); break;
+                }
+
+                filter.Products = await productsQuery.ToListAsync();
+                filter.Categories = await db.Category.Select(c => c.Name).ToListAsync();
+
+                return View(filter);
             }
             catch
             {
-                TempData["Error"] = "Unable to load product list.";
+                TempData["Error"] = "Unable to load filtered product list.";
                 return RedirectToAction("Index");
             }
         }

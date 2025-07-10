@@ -53,12 +53,14 @@
               @if (User.Identity?.IsAuthenticated == true)
 {
                         bool isDisabled = isOutOfStock || User.IsInRole(SD.Role_Admin);
-
+                        string tooltipText = isOutOfStock ? "Out of Stock" : "Admins are not allowed to buy products";
                         <a asp-controller="Cart"
                            asp-action="AddToCart"
                            asp-route-id="@Model.Id"
-                           class="btn btn-primary btn-lg @(isDisabled ? "disabled" : "")"
-                           disable=@(isDisabled ? "disabled" : "")>
+                           
+                           class="btn btn-primary btn-lg  @(isDisabled ? "disabled" : "")"
+                           disable=@(isDisabled ? true : false)
+                            data-toggle="tooltip" data-placement="top" title="@tooltipText" >
                             Add to Cart
                         </a>
                     }
@@ -66,7 +68,8 @@
                     {
                         <a asp-area="Identity"
                            asp-page="/Account/Login"
-                           class="btn btn-outline-primary btn-lg">
+                           class="btn btn-outline-primary btn-lg"
+                       data-toggle="tooltip" data-placement="top" title="Login to proceed">
                             Log in to Add to Cart
                         </a>
                     }

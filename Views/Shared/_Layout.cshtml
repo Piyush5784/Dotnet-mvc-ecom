@@ -1,4 +1,5 @@
-﻿@using VMart.Utility
+﻿
+@using VMart.Utility
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,7 +65,7 @@
                                     <li><a class="dropdown-item" asp-controller="Product" asp-action="List">Manage Products</a></li>
                                     <li><a class="dropdown-item" asp-controller="Category" asp-action="Index">Manage Categories</a></li>
                                     <li><a class="dropdown-item" asp-controller="Order" asp-action="Manage">Manage Orders</a></li>
-                                    @* <li><a class="dropdown-item" asp-controller="Category" asp-action="Index">Manage Users</a></li>  *@
+                                    <li><a class="dropdown-item" asp-controller="User" asp-action="Index">Manage Users</a></li> 
                                     </ul>
                             </li>
                         }
@@ -90,26 +91,12 @@
 
     <!-- Main Content -->
     <div class="container pt-5">
-        <main role="main" >
+        <main role="main" style="min-height:90vh" >
             <partial name="_Notification" />
             @RenderBody()
         </main>
     </div>
-
-    <!-- Footer -->
-    <footer class="border p-4 fixed-bottom bg-white mt-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <p class="mb-0">&copy; 2025 - Shopvia - Your Premium Shopping Destination</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <a asp-controller="Home" asp-action="Privacy">Privacy Policy</a> |
-                    <a asp-controller="Home" asp-action="Contact">Contact Us</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <partial name="_Footer"/>
 
     <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

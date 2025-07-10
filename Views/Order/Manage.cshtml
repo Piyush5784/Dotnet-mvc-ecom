@@ -8,99 +8,104 @@
         .OrderByDescending(g => g.First().OrderDate);
 }
 
-<h2 class="mt-4 mb-3">📋 Manage Customer Orders</h2>
+<h2 class="mt-4 mb-3 fw-semibold text-center">📋 Manage Customer Orders</h2>
 
-<div style="min-height:120vh">
-@if (!groupedOrders.Any())
-{
-    <div class="alert alert-info">
-        No orders have been placed yet.
-    </div>
-}
-else
-{
-    @foreach (var group in groupedOrders)
+<div class="container-fluid pb-5">
+    @if (!groupedOrders.Any())
     {
-        var order = group.First();
-        var total = group.Sum(o => o.Price * o.Quantity);
-
-        <div class="card mb-4 shadow-sm" >
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <div>
-                    <strong>Order #@order.Id</strong> by <span class="text-primary">@order.ApplicationUser?.UserName</span>
-                </div>
-                <div>
-                    <span class="badge @(order.Status == "Confirmed" ? "bg-success" : "bg-secondary")">
-                        @order.Status
-                    </span>
-                </div>
-                <div>
-                    @order.OrderDate.ToString("MMM dd, yyyy hh:mm tt")
-                </div>
-            </div>
-
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Product</th>
-                                <th style="width:80px">Image</th>
-                                <th>Qty</th>
-                                <th>Unit Price</th>
-                                <th>Line Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in group)
-                            {
-                                <tr>
-                                    <td>@item.Product?.Title</td>
-                                    <td>
-                                        @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
-                                        {
-                                            <img src="@item.Product.ImageUrl" class="img-fluid rounded" style="max-height:60px;" />
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No image</span>
-                                        }
-                                    </td>
-                                    <td>@item.Quantity</td>
-                                    <td>$@item.Price.ToString("F2")</td>
-                                    <td>$@(item.Price* item.Quantity)</td>
-                                </tr>
-                            }
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-light">
-                                <td colspan="4" class="text-end fw-bold">Order Total:</td>
-                                <td class="fw-bold">$@total.ToString("F2")</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card-footer d-flex justify-content-end gap-2">
-                <a asp-controller="Product" asp-action="Details" asp-route-id="@order.Product.Id" class="btn btn-sm btn-outline-primary">
-                    View Product Details
-                </a>
-
-                @* Show "Mark as Shipped" only if not already shipped or cancelled *@
-                @if (order.Status == SD.OrderStatusConfirmed || order.Status == SD.OrderStatusProcessing)
-                {
-                    <form asp-controller="Order" asp-action="MarkAsShipped" asp-route-id="@order.Id" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-sm btn-success">
-                            Mark as Shipped
-                        </button>
-                    </form>
-                }
-
-               
-            </div>
-
-        </div>
+        <div class="alert alert-info text-center">No orders have been placed yet.</div>
     }
-}
+    else
+    {
+        @foreach (var group in groupedOrders)
+        {
+            var order = group.First();
+            var total = group.Sum(o => o.Price * o.Quantity);
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-header bg-light d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                    <div>
+                        <strong>Order #@order.Id</strong> · <span class="text-primary">@order.ApplicationUser?.UserName</span>
+                    </div>
+                    <div>
+                        <span class="badge bg-@(order.Status == SD.OrderStatusCancelled ? "danger" :
+                                                                             order.Status == SD.OrderStatusShipped ? "info" :
+                                                                             "success")">
+                    @order.Status
+                </span>
+                <span class="badge bg-@(order.paymentStatus == "Paid" ? "success" : "secondary")">
+                    @order.paymentStatus
+                </span>
+            </div>
+            <div class="text-muted small">
+                <i class="bi bi-calendar-event me-1"></i> @order.OrderDate.ToString("MMM dd, yyyy hh:mm tt")
+            </div>
+        </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="width:80px">Image</th>
+                                    <th>Qty</th>
+                                    <th>Unit Price</th>
+                                    <th>Line Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        @foreach (var item in group)
+                                {
+                                    <tr>
+                                        <td>@item.Product?.Title</td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
+                                            {
+                                                <img src="@item.Product.ImageUrl" class="img-fluid rounded border" style="max-height:60px;" />
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No image</span>
+                                            }
+                                        </td>
+                                        <td>@item.Quantity</td>
+                                        <td>$@item.Price.ToString("F2")</td>
+                                        <td>$@(item.Price* item.Quantity)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <td colspan="4" class="text-end fw-semibold">Order Total:</td>
+                                    <td class="fw-bold text-primary">$@total.ToString("F2")</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer d-flex flex-column flex-md-row justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        <i class="bi bi-credit-card-2-front me-1"></i>
+                        <strong>Payment ID:</strong> @order.PaymentSessionId
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3 mt-md-0">
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@order.Product?.Id" class="btn btn-sm btn-outline-primary">
+                            View Product Details
+                        </a>
+                        @if (order.Status == SD.OrderStatusConfirmed || order.Status == SD.OrderStatusProcessing)
+                        {
+                            <form asp-controller="Order" asp-action="MarkAsShipped" asp-route-id="@order.Id" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    Mark as Shipped
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    }
 </div>

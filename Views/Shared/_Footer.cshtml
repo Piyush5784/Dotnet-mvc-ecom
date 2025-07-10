@@ -1,0 +1,46 @@
+﻿
+
+<div class="container">
+    <footer class="py-5">
+        <div class="row gy-4">
+            <!-- Navigation Columns -->
+            <div class="col-6 col-md-3">
+                <h5 class="fw-semibold">Homepage</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Index" class="nav-link p-0 text-muted">Home</a></li>
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Privacy" class="nav-link p-0 text-muted">Privacy</a></li>
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Contact" class="nav-link p-0 text-muted">Contact</a></li>
+                    <li class="nav-item"><a asp-controller="Home" asp-action="Feedback" class="nav-link p-0 text-muted">Feedback</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <h5 class="fw-semibold">Products</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a asp-controller="Product" asp-action="Index" class="nav-link p-0 text-muted">Shop</a></li>
+                </ul>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <h5 class="fw-semibold">Manage</h5>
+                <ul class="nav flex-column">
+                    <li class="nav-item"><a asp-controller="Cart" asp-action="Index" class="nav-link p-0 text-muted">Cart</a></li>
+                    <li class="nav-item"><a asp-controller="Order" asp-action="Index" class="nav-link p-0 text-muted">Orders</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact Form -->
+              </div>
+
+        <!-- Footer Bottom -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-center pt-4 mt-5 border-top">
+            <p class="mb-2 mb-sm-0 text-muted">© 2025 Shopvia. All rights reserved.</p>
+           
+        </div>
+    </footer>
+</div>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

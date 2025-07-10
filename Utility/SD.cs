@@ -14,5 +14,13 @@
         public const string OrderStatusDelivered = "Delivered";
         public const string OrderStatusCancelled = "Cancelled";
         public const string OrderStatusRefunded = "Refunded";
+
+
+        // payment statuses
+        public const string Payment_Status_pending = "Pending";
+        public const string Payment_Status_Completed = "Completed";
+        public const string Payment_Status_Failed = "Failed";
+        public const string Payment_Status_Cancelled = "Cancelled";
+       
     }
 }

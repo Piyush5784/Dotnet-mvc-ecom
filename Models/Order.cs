@@ -30,5 +30,13 @@ namespace VMart.Models
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
+
+
+        [Required]
+        public string paymentStatus { get; set; } = SD.OrderStatusPending;
+
+
+        [StringLength(200)]
+        public string? PaymentSessionId { get; set; }
     }
 }
