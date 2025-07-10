@@ -21,6 +21,15 @@
         public const string Payment_Status_Completed = "Completed";
         public const string Payment_Status_Failed = "Failed";
         public const string Payment_Status_Cancelled = "Cancelled";
-       
+
+        // logs types
+        // Log Levels
+        public const string Log_Info = "Info";
+        public const string Log_Success = "Success";
+        public const string Log_Warning = "Warning";
+        public const string Log_Error = "Error";
+        public const string Log_Fatal = "Fatal";
+
+
     }
 }

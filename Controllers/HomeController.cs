@@ -1,29 +1,29 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Diagnostics;
-using System.Threading.Tasks;
 using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
-using System;
-using Microsoft.Extensions.Logging;
-using System.Collections.Generic;
+using VMart.Interfaces;
 
 namespace VMart.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
         private readonly ApplicationDbContext db;
         private readonly EmailSender emailSender;
+        private readonly ILogService logger;
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext db, EmailSender emailSender)
+        public HomeController(ApplicationDbContext db, EmailSender emailSender, ILogService logger)
         {
-            _logger = logger;
             this.db = db;
             this.emailSender = emailSender;
+            this.logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -35,7 +35,7 @@ namespace VMart.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error loading homepage products");
+                await logger.LogAsync(SD.Log_Error, "Error loading homepage products", "Home", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load products.";
                 return RedirectToAction("Error");
             }
@@ -76,7 +76,7 @@ namespace VMart.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error submitting feedback");
+                await logger.LogAsync(SD.Log_Error, "Failed to submit feedback", "Home", "Feedback", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to submit feedback.";
                 return RedirectToAction("Feedback");
             }
@@ -101,7 +101,7 @@ namespace VMart.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending contact message");
+                await logger.LogAsync(SD.Log_Error, "Failed to send contact message", "Home", "Contact", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Something went wrong while sending your message.";
                 return RedirectToAction("Contact");
             }

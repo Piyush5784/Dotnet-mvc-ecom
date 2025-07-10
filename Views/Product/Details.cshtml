@@ -2,21 +2,24 @@
 @model Product
 
 @{
-    ViewData["Title"] = @Model.Title;
+    ViewData["Title"] = Model.Title;
     bool isOutOfStock = Model.Quantity <= 0;
 }
+<link href="~/css/imageZoom.css" rel="stylesheet" />
 
+<!-- 💎 Product Layout -->
 <div class="container my-5">
-    <div class="row">
-        <!-- Product Image -->
+    <div class="row gy-5">
+        <!-- Product Image with Zoom -->
         <div class="col-md-6">
-            <img src="@Model.ImageUrl" alt="@Model.Title" class="card-img-top w-75 img-fluid" />
+            <div id="imageZoom" style="--zoom-origin-x: center; --zoom-origin-y: center;">
+                <img src="@Model.ImageUrl" alt="@Model.Title" />
+            </div>
         </div>
 
         <!-- Product Info -->
         <div class="col-md-6">
-            <h2 class="mb-3">@Model.Title</h2>
-
+            <h2 class="fw-semibold mb-2">@Model.Title</h2>
             <p class="text-muted">@Model.Category?.Name</p>
 
             <!-- Star Ratings -->
@@ -25,16 +28,16 @@
                 {
                     <i class="bi @(i <= Model.Ratings ? "bi-star-fill" : "bi-star")"></i>
                 }
-                <span class="text-dark ms-2">(@Model.Ratings/5)</span>
+                <span class="text-dark ms-2">(@Model.Ratings / 5)</span>
             </div>
 
             <!-- Price -->
-            <h4 class="text-primary mb-3">$@Model.Price.ToString("0.00")</h4>
+            <h4 class="text-primary fw-bold mb-3">$@Model.Price.ToString("0.00")</h4>
 
             <!-- Description -->
             <p class="mb-4">@Model.Description</p>
 
-            <!-- Quantity -->
+            <!-- Stock -->
             <p class="fw-semibold">
                 @if (isOutOfStock)
                 {
@@ -42,43 +45,39 @@
                 }
                 else
                 {
-                    <span class="text-success">@(Model.Quantity) item(s) available</span>
-                    
+                    <span class="text-success">@Model.Quantity item(s) available</span>
                 }
             </p>
 
-            <!-- Buttons -->
-            <!-- Buttons -->
-            <div class="d-flex gap-3">
-              @if (User.Identity?.IsAuthenticated == true)
-{
-                        bool isDisabled = isOutOfStock || User.IsInRole(SD.Role_Admin);
-                        string tooltipText = isOutOfStock ? "Out of Stock" : "Admins are not allowed to buy products";
-                        <a asp-controller="Cart"
-                           asp-action="AddToCart"
-                           asp-route-id="@Model.Id"
-                           
-                           class="btn btn-primary btn-lg  @(isDisabled ? "disabled" : "")"
-                           disable=@(isDisabled ? true : false)
-                            data-toggle="tooltip" data-placement="top" title="@tooltipText" >
-                            Add to Cart
-                        </a>
-                    }
-                    else
-                    {
-                        <a asp-area="Identity"
-                           asp-page="/Account/Login"
-                           class="btn btn-outline-primary btn-lg"
-                       data-toggle="tooltip" data-placement="top" title="Login to proceed">
-                            Log in to Add to Cart
-                        </a>
-                    }
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 flex-wrap">
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    bool isDisabled = isOutOfStock || User.IsInRole(SD.Role_Admin);
+                    string tooltipText = isOutOfStock ? "Out of Stock" : "Admins are not allowed to buy products";
+
+                    <a asp-controller="Cart"
+                       asp-action="AddToCart"
+                       asp-route-id="@Model.Id"
+                       class="btn btn-primary btn-lg @(isDisabled ? "disabled" : "")"
+                       title="@tooltipText">
+                        Add to Cart
+                    </a>
+                }
+                else
+                {
+                    <a asp-area="Identity"
+                       asp-page="/Account/Login"
+                       class="btn btn-outline-primary btn-lg"
+                       title="Login to proceed">
+                        Log in to Add to Cart
+                    </a>
+                }
 
                 <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary btn-lg">
                     Back to Products
                 </a>
             </div>
-
 
             @if (isOutOfStock)
             {
@@ -89,3 +88,46 @@
         </div>
     </div>
 </div>
+
+<!-- 🎯 Mouse-Based Zoom Origin -->
+@section Scripts {
+    <script>
+        const imageZoom = document.getElementById('imageZoom');
+        const image = imageZoom.querySelector('img');
+
+        imageZoom.addEventListener('mousemove', (e) => {
+            const rect = imageZoom.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+            const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+            imageZoom.style.setProperty('--zoom-origin-x', `${x}%`);
+            imageZoom.style.setProperty('--zoom-origin-y', `${y}%`);
+        });
+    </script>
+}
+<style>
+    #imageZoom {
+        position: relative;
+        width: 100%;
+        max-width: 400px;
+        height: auto;
+        overflow: hidden;
+        border-radius: 8px;
+        /* border: 1px solid #ddd; */
+    }
+
+        #imageZoom img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+            transform: scale(1);
+            transform-origin: center center;
+        }
+
+        #imageZoom:hover img {
+            transform: scale(2);
+            transform-origin: var(--zoom-origin-x) var(--zoom-origin-y);
+        }
+
+</style>

@@ -2,10 +2,13 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
+using VMart.Interfaces;
 
 namespace VMart.Controllers
 {
@@ -13,13 +16,16 @@ namespace VMart.Controllers
     public class UserController : Controller
     {
         private readonly ApplicationDbContext db;
-
         private readonly UserManager<IdentityUser> _userManager;
-        public UserController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+        private readonly ILogService logger;
+
+        public UserController(ApplicationDbContext db, UserManager<IdentityUser> userManager, ILogService logger)
         {
             this.db = db;
             _userManager = userManager;
+            this.logger = logger;
         }
+
         public async Task<IActionResult> Index()
         {
             try
@@ -39,12 +45,12 @@ namespace VMart.Controllers
 
                 return View(userWithRoles);
             }
-            catch
+            catch (System.Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to fetch users", "User", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["error"] = "Failed to fetch users";
                 return View(new List<UserViewModel>());
             }
         }
-
     }
 }

@@ -1,0 +1,29 @@
+﻿@model VMart.Models.Feedback
+@{
+    ViewData["Title"] = "Feedback Details";
+}
+
+<h2 class="mb-4">📨 Feedback Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.Name</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Subject</dt>
+            <dd class="col-sm-9">@Model.Subject</dd>
+
+            <dt class="col-sm-3">Message</dt>
+            <dd class="col-sm-9">@Model.Message</dd>
+
+            <dt class="col-sm-3">Submitted At</dt>
+            <dd class="col-sm-9">@Model.SubmittedAt.ToLocalTime().ToString("f")</dd>
+        </dl>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-primary mt-3">← Back to Feedbacks</a>

@@ -1,0 +1,26 @@
+﻿@model VMart.Models.Contact
+@{
+    ViewData["Title"] = "Contact Details";
+}
+
+<h2 class="mb-4">📝 Contact Message Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Full Name</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3">Email</dt>
+            <dd class="col-sm-9">@Model.Email</dd>
+
+            <dt class="col-sm-3">Phone Number</dt>
+            <dd class="col-sm-9">@Model.PhoneNumber</dd>
+
+            <dt class="col-sm-3">Message</dt>
+            <dd class="col-sm-9">@Model.Message</dd>
+        </dl>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-primary mt-3">← Back to Contacts</a>

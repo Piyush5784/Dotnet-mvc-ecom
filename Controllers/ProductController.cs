@@ -6,6 +6,11 @@ using VMart.Dto;
 using VMart.Models;
 using VMart.Services;
 using VMart.Utility;
+using VMart.Interfaces;
+using System;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace VMart.Controllers
 {
@@ -13,11 +18,13 @@ namespace VMart.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly ICloudinaryService cloud;
+        private readonly ILogService logger;
 
-        public ProductController(ApplicationDbContext db, ICloudinaryService cloud)
+        public ProductController(ApplicationDbContext db, ICloudinaryService cloud, ILogService logger)
         {
             this.db = db;
             this.cloud = cloud;
+            this.logger = logger;
         }
 
         public IActionResult Index(ProductFilterViewModel filter)
@@ -61,14 +68,14 @@ namespace VMart.Controllers
 
                 return View(filter);
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogAsync(SD.Log_Error, "Failed to load products", "Product", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load products.";
                 return RedirectToAction("Index", "Home");
             }
         }
 
-        [Authorize(Roles = SD.Role_Admin)]
         [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> List(ProductFilterViewModel filter)
         {
@@ -101,8 +108,9 @@ namespace VMart.Controllers
 
                 return View(filter);
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Unable to load filtered product list", "Product", "List", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Unable to load filtered product list.";
                 return RedirectToAction("Index");
             }
@@ -116,8 +124,9 @@ namespace VMart.Controllers
                 if (product is null) return NotFound();
                 return View(product);
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to load product details", "Product", "Details", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load product details.";
                 return RedirectToAction("Index");
             }
@@ -163,8 +172,9 @@ namespace VMart.Controllers
                 TempData["Success"] = "Product created successfully!";
                 return RedirectToAction("List");
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Error while creating product", "Product", "Create", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "An error occurred while creating the product.";
                 return RedirectToAction("List");
             }
@@ -186,8 +196,9 @@ namespace VMart.Controllers
                     Categories = GetOrderedCategories()
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to load edit form", "Product", "Edit", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load edit form.";
                 return RedirectToAction("List");
             }
@@ -234,8 +245,9 @@ namespace VMart.Controllers
                 TempData["Success"] = "Product successfully updated!";
                 return RedirectToAction("List");
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to update product", "Product", "Edit", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to update product.";
                 return RedirectToAction("List");
             }
@@ -257,8 +269,9 @@ namespace VMart.Controllers
                     Categories = GetOrderedCategories()
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to load delete form", "Product", "Delete", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load delete confirmation.";
                 return RedirectToAction("List");
             }
@@ -281,8 +294,9 @@ namespace VMart.Controllers
                 TempData["Success"] = "Product successfully deleted!";
                 return RedirectToAction("List");
             }
-            catch
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Error while deleting product", "Product", "DeletePOST", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Error while deleting product.";
                 return RedirectToAction("List");
             }
@@ -294,8 +308,9 @@ namespace VMart.Controllers
             {
                 return db.Category.OrderBy(c => c.DisplayOrder).ToList();
             }
-            catch
+            catch (Exception ex)
             {
+                logger.LogAsync(SD.Log_Error, "Error loading categories", "Product", "GetOrderedCategories", ex.ToString(), Request.Path, User.Identity?.Name);
                 return new List<Category>();
             }
         }

@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
+using VMart.Interfaces;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
@@ -16,11 +17,13 @@ namespace VMart.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly UserManager<IdentityUser> userManager;
+        private readonly ILogService logger;
 
-        public OrderController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+        public OrderController(ApplicationDbContext db, UserManager<IdentityUser> userManager, ILogService logger)
         {
             this.db = db;
             this.userManager = userManager;
+            this.logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -38,8 +41,9 @@ namespace VMart.Controllers
 
                 return View(orders);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to load user orders", "Order", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load your orders.";
                 return RedirectToAction("Index", "Home");
             }
@@ -57,8 +61,9 @@ namespace VMart.Controllers
 
                 return View(orders);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, "Failed to load order management", "Order", "Manage", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load order management.";
                 return RedirectToAction("Index", "Home");
             }
@@ -82,8 +87,9 @@ namespace VMart.Controllers
                 TempData["Success"] = $"Order #{order.Id} marked as shipped.";
                 return RedirectToAction("Manage");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, $"Failed to mark order #{id} as shipped", "Order", "MarkAsShipped", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Error marking order as shipped.";
                 return RedirectToAction("Manage");
             }
@@ -121,8 +127,9 @@ namespace VMart.Controllers
                 TempData["Success"] = $"Order #{order.Id} has been cancelled.";
                 return RedirectToAction("Index");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logger.LogAsync(SD.Log_Error, $"Failed to cancel order #{id}", "Order", "CancelByUser", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Error cancelling the order.";
                 return RedirectToAction("Index");
             }

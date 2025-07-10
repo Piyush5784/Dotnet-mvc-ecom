@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Stripe;
 using VMart.Data;
+using VMart.Interfaces;
 using VMart.Models;
 using VMart.Services;
 using VMart.Utility;
@@ -22,6 +23,7 @@ builder.Services.Configure<CloudinarySettings>(
     builder.Configuration.GetSection("Cloudinary"));
 
 builder.Services.AddSingleton<ICloudinaryService, CloudinaryService>();
+builder.Services.AddScoped<ILogService , LogService>();
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>
     ()
@@ -40,6 +42,7 @@ builder.Services.ConfigureApplicationCookie(o =>
     o.LoginPath = $"/Identity/Account/Login";
     o.LogoutPath = $"/Identity/Account/Logout";
     o.AccessDeniedPath = $"/Identity/Account/AccessDenied";
+    
 });
 
 
@@ -47,9 +50,37 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var exceptionFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+        var logger = context.RequestServices.GetRequiredService<ILogService>();
+
+        var error = exceptionFeature?.Error;
+        var path = exceptionFeature?.Path;
+        var user = context.User.Identity?.Name;
+
+        if (error != null)
+        {
+            await logger.LogAsync(
+                SD.Log_Error,
+                "Unhandled exception",
+                controller: null,
+                action: null,
+                stackTrace: error.ToString(),
+                path: path,
+                userName: user
+            );
+        }
+
+        context.Response.Redirect("/Home/Error");
+    });
+});
+
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

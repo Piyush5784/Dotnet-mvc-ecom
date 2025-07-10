@@ -68,7 +68,12 @@ bld/
 [Bb]in/
 [Oo]bj/
 [Oo]ut/
+# Ignore all log folders...
 [Ll]og/
+
+# ...but NOT the one inside Views
+!Views/Log/
+
 [Ll]ogs/
 
 # Visual Studio 2015/2017 cache/options directory
@@ -388,6 +393,8 @@ ASALocalRun/
 
 # Local History for Visual Studio
 .localhistory/
+
+
 
 # BeatPulse healthcheck temp database
 healthchecksdb

@@ -7,6 +7,7 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using System;
+using VMart.Interfaces;
 
 namespace VMart.Controllers
 {
@@ -15,9 +16,11 @@ namespace VMart.Controllers
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly ApplicationDbContext db;
+        private readonly ILogService logEntry;
 
-        public CartController(UserManager<IdentityUser> userManager, ApplicationDbContext db)
+        public CartController(UserManager<IdentityUser> userManager, ApplicationDbContext db,ILogService logEntry)
         {
+            this.logEntry = logEntry;
             this.userManager = userManager;
             this.db = db;
         }
@@ -37,8 +40,9 @@ namespace VMart.Controllers
 
                 return View(cartItems);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logEntry.LogAsync(SD.Log_Error, "Failed to load cart", "Cart", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load your cart.";
                 return RedirectToAction("Index", "Cart");
             }
@@ -80,8 +84,9 @@ namespace VMart.Controllers
                 TempData["Success"] = "Item added to cart!";
                 return RedirectToAction("Index", "Cart");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logEntry.LogAsync(SD.Log_Error, "Error adding item to cart", "Cart", "AddToCart", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Error adding item to cart.";
                 return RedirectToAction("Index", "Cart");
             }
@@ -109,8 +114,10 @@ namespace VMart.Controllers
 
                 return RedirectToAction("Index", "Cart");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logEntry.LogAsync(SD.Log_Error, "Error Removing item from cart", "Cart", "Remove", ex.ToString(), Request.Path, User.Identity?.Name);
+
                 TempData["Error"] = "Error removing item from cart.";
                 return RedirectToAction("Index", "Cart");
             }
@@ -141,9 +148,11 @@ namespace VMart.Controllers
 
                 return RedirectToAction("Index", "Cart");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                TempData["Error"] = "Error decreasing item quantity.";
+                await logEntry.LogAsync(SD.Log_Error, "Error decreasing item from cart", "Cart", "Decrease", ex.ToString(), Request.Path, User.Identity?.Name);
+
+                TempData["Error"] = "Error removing item quantity.";
                 return RedirectToAction("Index", "Cart");
             }
         }
@@ -173,8 +182,10 @@ namespace VMart.Controllers
                 TempData["Success"] = "Item quantity increased.";
                 return RedirectToAction("Index", "Cart");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                await logEntry.LogAsync(SD.Log_Error, "Error increasing item quantity", "Cart", "Increase", ex.ToString(), Request.Path, User.Identity?.Name);
+
                 TempData["Error"] = "Error increasing item quantity.";
                 return RedirectToAction("Index", "Cart");
             }

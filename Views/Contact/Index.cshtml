@@ -1,0 +1,34 @@
+﻿@model List<Contact>
+@{
+    ViewData["Title"] = "Contact Messages";
+}
+
+<h2 class="mb-4">📬 Submitted Contact Messages</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Message</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var contact in Model)
+        {
+            <tr>
+                <td>@contact.FullName</td>
+                <td>@contact.Email</td>
+                <td>@contact.PhoneNumber</td>
+                <td class="text-break">
+                    @contact.Message?.Substring(0, Math.Min(contact.Message.Length, 100))...
+                </td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@contact.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

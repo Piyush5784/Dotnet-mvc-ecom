@@ -1,0 +1,43 @@
+﻿@model VMart.Models.Logs
+@{
+    ViewData["Title"] = "Log Details";
+}
+
+<h2 class="mb-4">🕵️ Log Entry Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Timestamp</dt>
+            <dd class="col-sm-9">@Model.Timestamp.ToString("f")</dd>
+
+            <dt class="col-sm-3">Type</dt>
+            <dd class="col-sm-9"><span class="badge bg-@Model.Type.ToLowerInvariant()">@Model.Type</span></dd>
+
+            <dt class="col-sm-3">Message</dt>
+            <dd class="col-sm-9 text-break">@Model.Message</dd>
+
+            <dt class="col-sm-3">User</dt>
+            <dd class="col-sm-9">@(Model.UserName ?? "Anonymous")</dd>
+
+            <dt class="col-sm-3">Controller</dt>
+            <dd class="col-sm-9">@(Model.Controller ?? "(n/a)")</dd>
+
+            <dt class="col-sm-3">Action</dt>
+            <dd class="col-sm-9">@(Model.Action ?? "(n/a)")</dd>
+
+            <dt class="col-sm-3">Request Path</dt>
+            <dd class="col-sm-9">@Model.RequestPath</dd>
+
+            @if (!string.IsNullOrWhiteSpace(Model.StackTrace))
+            {
+                <dt class="col-sm-3">Stack Trace</dt>
+                <dd class="col-sm-9">
+                    <pre class="bg-light p-3 text-break">@Model.StackTrace</pre>
+                </dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-outline-primary mt-3">← Back to Logs</a>

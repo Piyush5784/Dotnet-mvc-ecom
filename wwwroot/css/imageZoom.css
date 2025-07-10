@@ -1,0 +1,23 @@
+﻿#imageZoom {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    overflow: hidden;
+    border-radius: 8px;
+    /* border: 1px solid #ddd; */
+}
+
+    #imageZoom img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+        transform: scale(1);
+        transform-origin: center center;
+    }
+
+    #imageZoom:hover img {
+        transform: scale(2);
+        transform-origin: var(--zoom-origin-x) var(--zoom-origin-y);
+    }

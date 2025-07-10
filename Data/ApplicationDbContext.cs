@@ -17,6 +17,8 @@ namespace VMart.Data
         public DbSet<Feedback> Feedback { get; set; }
         public DbSet<Contact> Contact { get; set; }
 
+        public DbSet<Logs> Logs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -1,0 +1,49 @@
+﻿@using VMart.Utility
+@model IEnumerable<Logs>
+@{
+    ViewData["Title"] = "System Logs";
+}
+
+<h2 class="mb-4">📜 Application Logs</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Timestamp</th>
+            <th>Level</th>
+            <th>Message</th>
+            <th>User</th>
+            <th>Path</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.Timestamp.ToString("g")</td>
+                <td class="text-@GetColorClass(log.Type)">@log.Type</td>
+                <td>@(log.Message.Length > 60 ? log.Message.Substring(0, 60) + "..." : log.Message)</td>
+                <td>@log.UserName</td>
+                <td>@log.RequestPath</td>
+                <td>
+                    <a asp-controller="Log" asp-action="Details" asp-route-id="@log.Id" class="btn btn-sm btn-outline-dark">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@functions {
+    string GetColorClass(string type)
+    {
+        return type switch
+        {
+            SD.Log_Success => "success",
+            SD.Log_Error => "danger",
+            SD.Log_Warning => "warning",
+            SD.Log_Info => "info",
+            _ => "secondary"
+        };
+    }
+}

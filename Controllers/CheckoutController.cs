@@ -10,6 +10,7 @@ using Stripe.Checkout;
 using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
+using VMart.Interfaces;
 
 namespace VMart.Controllers
 {
@@ -19,28 +20,27 @@ namespace VMart.Controllers
         private readonly IConfiguration _config;
         private readonly ApplicationDbContext _db;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly ILogService _logger;
 
         public CheckoutController(
             IConfiguration config,
             UserManager<IdentityUser> userManager,
-            ApplicationDbContext db)
+            ApplicationDbContext db,
+            ILogService logger)
         {
-            _config      = config;
+            _config = config;
             _userManager = userManager;
-            _db          = db;
+            _db = db;
+            _logger = logger;
         }
 
-        // GET: /Checkout
         public async Task<IActionResult> Index()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) 
-                return Unauthorized();
+            if (user == null) return Unauthorized();
+
             var applicationUser = await _db.ApplicationUser.FindAsync(user.Id);
-            if (applicationUser == null)
-            {
-                return Unauthorized();
-            }
+            if (applicationUser == null) return Unauthorized();
 
             var cartItems = await _db.Cart
                 .Include(c => c.Product)
@@ -56,10 +56,10 @@ namespace VMart.Controllers
             var vm = new CheckoutViewModel
             {
                 StreetAddress = applicationUser.StreetAddress,
-                City          = applicationUser.City,
-                State         = applicationUser.State,
-                PostalCode    = applicationUser.PostalCode,
-                CartItems     = cartItems
+                City = applicationUser.City,
+                State = applicationUser.State,
+                PostalCode = applicationUser.PostalCode,
+                CartItems = cartItems
             };
 
             return View(vm);
@@ -70,13 +70,10 @@ namespace VMart.Controllers
         public async Task<IActionResult> CreateCheckoutSession(CheckoutViewModel model)
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) 
-                return Unauthorized();
+            if (user == null) return Unauthorized();
+
             var applicationUser = await _db.ApplicationUser.FindAsync(user.Id);
-            if (applicationUser == null)
-            {
-                return Unauthorized();
-            }
+            if (applicationUser == null) return Unauthorized();
 
             var cartItems = await _db.Cart
                 .Include(c => c.Product)
@@ -87,6 +84,7 @@ namespace VMart.Controllers
 
             if (!ModelState.IsValid)
             {
+                await _logger.LogAsync(SD.Log_Error, "Invalid checkout address", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
                 TempData["Error"] = "Please fill out all address fields.";
                 return View("Index", model);
             }
@@ -97,34 +95,33 @@ namespace VMart.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            // update user address
+            // Update user address
             applicationUser.StreetAddress = model.StreetAddress;
-            applicationUser.City          = model.City;
-            applicationUser.State         = model.State;
-            applicationUser.PostalCode    = model.PostalCode;
-
+            applicationUser.City = model.City;
+            applicationUser.State = model.State;
+            applicationUser.PostalCode = model.PostalCode;
 
             await _db.SaveChangesAsync();
 
-            // validate stock
+            // Validate stock
             foreach (var item in cartItems)
             {
                 if (item.Quantity > item.Product.Quantity)
                 {
-                    TempData["Error"] = 
-                        $"Only {item.Product.Quantity} left for {item.Product.Title}.";
+                    await _logger.LogAsync(SD.Log_Warning, $"Stock issue on checkout: {item.Product.Title}", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
+                    TempData["Error"] = $"Only {item.Product.Quantity} left for {item.Product.Title}.";
                     return RedirectToAction("Index", "Cart");
                 }
             }
 
-            // build Stripe session
+            // Create Stripe session
             var domain = $"{Request.Scheme}://{Request.Host}";
             var lineItems = cartItems.Select(item => new SessionLineItemOptions
             {
                 PriceData = new SessionLineItemPriceDataOptions
                 {
                     UnitAmount = (long)(item.Product.Price * 100),
-                    Currency   = "usd",
+                    Currency = "usd",
                     ProductData = new SessionLineItemPriceDataProductDataOptions
                     {
                         Name = item.Product.Title
@@ -136,39 +133,34 @@ namespace VMart.Controllers
             var options = new SessionCreateOptions
             {
                 PaymentMethodTypes = new List<string> { "card" },
-                LineItems          = lineItems,
-                Mode               = "payment",
-                SuccessUrl         = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
-                CancelUrl          = $"{domain}/Checkout/Cancel?session_id={{CHECKOUT_SESSION_ID}}"
+                LineItems = lineItems,
+                Mode = "payment",
+                SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
+                CancelUrl = $"{domain}/Checkout/Cancel?session_id={{CHECKOUT_SESSION_ID}}"
             };
 
             var service = new SessionService();
             var session = service.Create(options);
 
-            // nothing saved to orders yet—will happen in Success()
             return Redirect(session.Url);
         }
-
 
         [HttpGet]
         public async Task<IActionResult> Success(string session_id)
         {
-            if (string.IsNullOrEmpty(session_id))
-                return BadRequest();
+            if (string.IsNullOrEmpty(session_id)) return BadRequest();
 
-            // retrieve the Stripe session to confirm payment
             var stripeSession = new SessionService().Get(session_id);
             if (stripeSession.PaymentStatus != "paid")
             {
+                await _logger.LogAsync(SD.Log_Error, $"Failed payment: {session_id}", "Checkout", "Success", null, Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Payment not completed.";
                 return RedirectToAction("Index", "Cart");
             }
 
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) 
-                return Unauthorized();
+            if (user == null) return Unauthorized();
 
-            // grab current cart items
             var cartItems = await _db.Cart
                 .Include(c => c.Product)
                 .Where(c => c.ApplicationUserId == user.Id)
@@ -180,39 +172,37 @@ namespace VMart.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
-            // create orders now that payment succeeded
+            // Create orders
             foreach (var item in cartItems)
             {
                 var order = new Order
                 {
                     ApplicationUserId = user.Id,
-                    ProductId         = item.ProductId,
-                    Quantity          = item.Quantity,
-                    Price             = item.Product.Price,
-                    Status            = SD.OrderStatusConfirmed,
-                    paymentStatus     = SD.Payment_Status_Completed,
-                    PaymentSessionId  = session_id,
-                    OrderDate         = DateTime.Now
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    Price = item.Product.Price,
+                    Status = SD.OrderStatusConfirmed,
+                    paymentStatus = SD.Payment_Status_Completed,
+                    PaymentSessionId = session_id,
+                    OrderDate = DateTime.Now
                 };
                 _db.Order.Add(order);
 
-                // decrement stock
                 item.Product.Quantity -= item.Quantity;
             }
 
-            // clear the cart
             _db.Cart.RemoveRange(cartItems);
             await _db.SaveChangesAsync();
 
+            await _logger.LogAsync(SD.Log_Success, $"Order placed successfully for {user.UserName}", "Checkout", "Success", null, Request.Path, user.UserName);
             TempData["Success"] = "Payment successful! Your order is confirmed.";
             return View();
         }
 
-        // GET: /Checkout/Cancel
         [HttpGet]
         public IActionResult Cancel(string session_id)
         {
-            // you could update any pending orders here if you pre-created them
+            _logger.LogAsync(SD.Log_Info, $"Payment cancelled by user: {session_id}", "Checkout", "Cancel", null, Request.Path, User.Identity?.Name);
             TempData["Error"] = "Payment was cancelled.";
             return RedirectToAction("Index", "Cart");
         }

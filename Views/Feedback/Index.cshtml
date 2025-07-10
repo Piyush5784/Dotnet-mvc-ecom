@@ -1,0 +1,36 @@
+﻿@model List<Feedback>
+@{
+    ViewData["Title"] = "User Feedbacks";
+}
+
+<h2 class="mb-4">💬 Submitted Feedbacks</h2>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Subject</th>
+            <th>Message</th>
+            <th>Submitted</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var feedback in Model)
+        {
+            <tr>
+                <td>@feedback.Name</td>
+                <td>@feedback.Email</td>
+                <td>@feedback.Subject</td>
+                <td class="text-break">
+                    @feedback.Message.Substring(0, Math.Min(feedback.Message.Length, 100))...
+                </td>
+                <td>@feedback.SubmittedAt.ToLocalTime().ToString("g")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@feedback.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
