@@ -2,6 +2,7 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.Extensions.Options;
+using VMart.Interfaces;
 using VMart.Models;
 
 namespace VMart.Services

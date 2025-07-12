@@ -16,7 +16,7 @@ namespace VMart.Controllers
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly ApplicationDbContext db;
-        private readonly ILogService logEntry;
+        private readonly ILogService logEntry; 
 
         public CartController(UserManager<IdentityUser> userManager, ApplicationDbContext db,ILogService logEntry)
         {

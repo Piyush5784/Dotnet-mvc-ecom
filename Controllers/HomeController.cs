@@ -10,16 +10,17 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
+using VMart.Services;
 
 namespace VMart.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ApplicationDbContext db;
-        private readonly EmailSender emailSender;
+        private readonly IEmailSenderApplicationInterface emailSender;
         private readonly ILogService logger;
 
-        public HomeController(ApplicationDbContext db, EmailSender emailSender, ILogService logger)
+        public HomeController(ApplicationDbContext db, IEmailSenderApplicationInterface emailSender, ILogService logger)
         {
             this.db = db;
             this.emailSender = emailSender;

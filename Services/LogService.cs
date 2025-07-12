@@ -2,7 +2,7 @@
 using VMart.Interfaces;
 using VMart.Models;
 
-namespace VMart.Utility
+namespace VMart.Services
 {
 
 

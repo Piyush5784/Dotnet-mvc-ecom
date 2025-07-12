@@ -1,6 +1,4 @@
-﻿
-
-namespace VMart.Services
+﻿namespace VMart.Interfaces
 {
     public interface ICloudinaryService
     {

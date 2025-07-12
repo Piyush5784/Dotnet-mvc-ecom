@@ -99,7 +99,9 @@
     --bs-tertiary-color-rgb: 73, 80, 87;
     --bs-tertiary-bg: #f8f9fa;
     --bs-tertiary-bg-rgb: 248, 249, 250;
-    --bs-heading-color: #2fa4e7;
+    /*    --bs-heading-color: #2fa4e7;*/
+
+    --bs-heading-color: #2c3e50;
     --bs-link-color: #2fa4e7;
     --bs-link-color-rgb: 47, 164, 231;
     --bs-link-decoration: underline;
