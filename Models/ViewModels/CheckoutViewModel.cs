@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace VMart.Models
+namespace VMart.Models.ViewModels
 {
     public class CheckoutViewModel
     {

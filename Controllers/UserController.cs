@@ -9,6 +9,7 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
+using VMart.Models.ViewModels;
 
 namespace VMart.Controllers
 {

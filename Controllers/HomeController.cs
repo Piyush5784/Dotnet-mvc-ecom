@@ -11,6 +11,7 @@ using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
 using VMart.Services;
+using VMart.Models.ViewModels;
 
 namespace VMart.Controllers
 {
@@ -32,7 +33,20 @@ namespace VMart.Controllers
             try
             {
                 List<Product> products = await db.Product.ToListAsync();
-                return View(products);
+
+                List<Product> LatestProducts = await db.LatestProduct
+                   .Include(lp => lp.Product)
+                   .OrderBy(lp => lp.DisplayOrder)
+                   .Select(lp => lp.Product)
+                   .ToListAsync();
+
+                ProductViewModel viewModel = new ProductViewModel
+                {
+                    AllProducts = products,
+                    LatestProducts = LatestProducts
+                };
+
+                return View(viewModel);
             }
             catch (Exception ex)
             {

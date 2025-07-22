@@ -1,0 +1,35 @@
+﻿@model VMart.Models.ViewModels.AddLatestProductViewModel
+
+@{
+    ViewData["Title"] = "Add Latest Product";
+}
+
+<h2 class="text-center my-4">Add New Product</h2>
+
+<form asp-action="Create" method="post" class="w-100 w-md-50 mx-auto border rounded p-4 shadow">
+    <div class="mb-3">
+        <label asp-for="NewProduct.DisplayOrder" class="form-label"></label>
+        <input asp-for="NewProduct.DisplayOrder" class="form-control" min="1" />
+        <span asp-validation-for="NewProduct.DisplayOrder" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="NewProduct.ProductId" class="form-label">Select Product</label>
+        <select asp-for="NewProduct.ProductId"  class="form-select" style="max-width: 100%;">
+            <option value="">-- Select Product --</option>
+            @foreach (var product in Model.Products)
+            {
+                <option value="@product.Id">@product.Title</option>
+            }
+        </select>
+        <span asp-validation-for="NewProduct.ProductId" class="text-danger"></span>
+    </div>
+
+    <div class="text-end">
+        <button type="submit" class="btn btn-primary">Save</button>
+    </div>
+</form>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+}

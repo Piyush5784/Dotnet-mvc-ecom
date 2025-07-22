@@ -14,6 +14,7 @@ namespace VMart.Data
         public DbSet<Product> Product { get; set; }
         public DbSet<Cart> Cart { get; set; }
         public DbSet<Order> Order { get; set; }
+        public DbSet<LatestProduct> LatestProduct { get; set; }
         public DbSet<Feedback> Feedback { get; set; }
         public DbSet<Contact> Contact { get; set; }
 

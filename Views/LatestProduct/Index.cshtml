@@ -1,0 +1,56 @@
+﻿@model List<LatestProduct>
+@{
+    ViewData["Title"] = "Latest Products";
+}
+
+<h2 class="text-center my-4">Latest Products</h2>
+
+<div class="text-end mb-3">
+    <a asp-controller="LatestProduct" asp-action="Create" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Add Product
+    </a>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Display Order</th> <!-- Index/DisplayOrder -->
+            <th>Image</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Price (₹)</th>
+            <th>Ratings</th>
+            <th style="width: 180px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model)
+        {
+            var product = p.Product;
+            <tr>
+                <td> @p.DisplayOrder</td>
+                <td>
+                    <img src="@product.ImageUrl" alt="@product.Title" width="100" height="100" style="object-fit: cover;" />
+                </td>
+                <td>@(product.Title.Length > 10 ? product.Title.Substring(0, 10) + "..." : product.Title) </td>
+                <td>@(product.Description.Length > 25 ? product.Description.Substring(0, 25) + "..." : product.Description)</td>
+                <td>@product.Price.ToString("F2")</td>
+                <td>
+                    @for (int j = 0; j < product.Ratings; j++)
+                    {
+                        <i class="bi bi-star-fill text-warning"></i>
+                    }
+                    @for (int j = product.Ratings; j < 5; j++)
+                    {
+                        <i class="bi bi-star text-muted"></i>
+                    }
+                </td>
+                <td style="width:250px">
+                    <a asp-action="Details" asp-controller="Product" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary me-1">View</a>
+                    <a asp-action="Update" asp-controller="LatestProduct" asp-route-id="@p.Id" class="btn btn-sm btn-outline-warning me-1">Update</a>
+                    <a asp-action="Delete" asp-controller="LatestProduct" asp-route-id="@p.Id" class="btn btn-sm btn-outline-danger me-1">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

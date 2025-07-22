@@ -21,13 +21,13 @@ namespace VMart.Models
 
         public Category? Category { get; set; }
 
-        [Range(0, int.MaxValue, ErrorMessage = "Quantity cannot be negative")]
+        [Range(1, int.MaxValue, ErrorMessage = "Quantity cannot be negative")]
         public int Quantity { get; set; }
 
-        [Range(0, 5, ErrorMessage = "Ratings must be between 0 and 5")]
+        [Range(1, 5, ErrorMessage = "Ratings must be between 0 and 5")]
         public int Ratings { get; set; }
 
-        [Range(0.0, double.MaxValue, ErrorMessage = "Price must be a positive value")]
+        [Range(1.0, double.MaxValue, ErrorMessage = "Price must be a positive value")]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
     }

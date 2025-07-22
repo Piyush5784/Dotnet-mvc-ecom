@@ -64,18 +64,18 @@ app.UseExceptionHandler(errorApp =>
         var path = exceptionFeature?.Path;
         var user = context.User.Identity?.Name;
 
-        //if (error != null)
-        //{
-        //    await logger.LogAsync(
-        //        SD.Log_Error,
-        //        "Unhandled exception",
-        //        controller: null,
-        //        action: null,
-        //        stackTrace: error.ToString(),
-        //        path: path,
-        //        userName: user
-        //    );
-        //}
+        if (error != null)
+        {
+            await logger.LogAsync(
+                SD.Log_Error,
+                "Unhandled exception",
+                controller: null,
+                action: null,
+                stackTrace: error.ToString(),
+                path: path,
+                userName: user
+            );
+        }
 
         context.Response.Redirect("/Home/Error");
     });
