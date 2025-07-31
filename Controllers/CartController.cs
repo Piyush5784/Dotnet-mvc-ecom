@@ -40,45 +40,9 @@ namespace VMart.Controllers
                     return View(apiResponse.Data);
                 }
 
-                // Fallback to local database if API is unavailable or returns error
-                var user = await userManager.GetUserAsync(User);
-                if (user == null)
-                {
-                    TempData["Error"] = "Please log in to view your cart.";
-                    return View(new List<CartDto>());
-                }
+                var cart = new CartDto();
 
-                var localCartItems = await db.Cart
-                    .Include(c => c.Product)
-                    .Where(c => c.ApplicationUserId == user.Id)
-                    .ToListAsync();
-
-                var cartDtos = localCartItems.Select(c =>
-                {
-                    var userId = Guid.TryParse(c.ApplicationUserId, out var parsedId) ? parsedId : Guid.Empty;
-                    return new CartDto
-                    {
-                        Id = c.Id,
-                        UserId = userId,
-                        ProductId = c.ProductId,
-                        ProductName = c.Product != null ? c.Product.Title : "Unknown Product",
-                        ProductDescription = c.Product != null ? c.Product.Description : "",
-                        ProductPrice = c.Product != null ? c.Product.Price : 0,
-                        ProductImageUrl = c.Product != null ? c.Product.ImageUrl : "",
-                        Quantity = c.Quantity
-                    };
-                }).ToList();
-
-                if (cartDtos.Any())
-                {
-                    TempData["error"] = "Loaded cart from local database (API unavailable).";
-                }
-                else if (apiResponse?.Success == false)
-                {
-                    TempData["Error"] = apiResponse.Message ?? "Failed to load cart from API.";
-                }
-
-                return View(cartDtos);
+                return View(cart);
             }
             catch (Exception ex)
             {

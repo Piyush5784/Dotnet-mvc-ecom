@@ -59,7 +59,7 @@ namespace VMart.Controllers
                         // Ensure CartItems is not null before returning to view
                         if (checkoutResponse.Data.CartItems == null)
                         {
-                            checkoutResponse.Data.CartItems = new List<VMart.Models.Cart>();
+                            checkoutResponse.Data.CartItems = new List<Cart>();
                         }
 
                         Console.WriteLine($"Cart Items Count: {checkoutResponse.Data.CartItems.Count}");
@@ -76,43 +76,7 @@ namespace VMart.Controllers
                     Console.WriteLine("No response received from API");
                 }
 
-                // Fallback to local database if API fails
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                {
-                    TempData["Error"] = "User not authenticated.";
-                    return RedirectToAction("Index", "Cart");
-                }
-
-                var applicationUser = await _db.ApplicationUser.FindAsync(user.Id);
-                if (applicationUser == null)
-                {
-                    TempData["Error"] = "User profile not found.";
-                    return RedirectToAction("Index", "Cart");
-                }
-
-                var cartItems = await _db.Cart
-                    .Include(c => c.Product)
-                    .Where(c => c.ApplicationUserId == user.Id)
-                    .ToListAsync();
-
-                if (!cartItems.Any())
-                {
-                    TempData["Error"] = "Your cart is empty.";
-                    return RedirectToAction("Index", "Cart");
-                }
-
-                var vm = new CheckoutViewModel
-                {
-                    StreetAddress = applicationUser?.StreetAddress ?? "",
-                    City = applicationUser?.City ?? "",
-                    State = applicationUser?.State ?? "",
-                    PostalCode = applicationUser?.PostalCode ?? "",
-                    CartItems = cartItems ?? new List<VMart.Models.Cart>()
-                };
-
-                TempData["Warning"] = "Loaded checkout from local database (API unavailable).";
-                return View(vm);
+                return View(new CheckoutViewModel());
             }
             catch (Exception ex)
             {
@@ -154,81 +118,81 @@ namespace VMart.Controllers
                 }
 
                 // Fallback to local processing if API fails
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null) return Unauthorized();
+                // var user = await _userManager.GetUserAsync(User);
+                // if (user == null) return Unauthorized();
 
-                var applicationUser = await _db.ApplicationUser.FindAsync(user.Id);
-                if (applicationUser == null) return Unauthorized();
+                // var applicationUser = await _db.ApplicationUser.FindAsync(user.Id);
+                // if (applicationUser == null) return Unauthorized();
 
-                var cartItems = await _db.Cart
-                    .Include(c => c.Product)
-                    .Where(c => c.ApplicationUserId == user.Id)
-                    .ToListAsync();
+                // var cartItems = await _db.Cart
+                //     .Include(c => c.Product)
+                //     .Where(c => c.ApplicationUserId == user.Id)
+                //     .ToListAsync();
 
-                model.CartItems = cartItems;
+                // model.CartItems = cartItems;
 
-                if (!ModelState.IsValid)
-                {
-                    await _logger.LogAsync(SD.Log_Error, "Invalid checkout address", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
-                    TempData["Error"] = "Please fill out all address fields.";
-                    return View("Index", model);
-                }
+                // if (!ModelState.IsValid)
+                // {
+                //     await _logger.LogAsync(SD.Log_Error, "Invalid checkout address", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
+                //     TempData["Error"] = "Please fill out all address fields.";
+                //     return View("Index", model);
+                // }
 
-                if (cartItems.Count == 0)
-                {
-                    TempData["Error"] = "Your cart is empty.";
-                    return RedirectToAction("Index", "Cart");
-                }
+                // if (cartItems.Count == 0)
+                // {
+                //     TempData["Error"] = "Your cart is empty.";
+                //     return RedirectToAction("Index", "Cart");
+                // }
 
-                // Update user address
-                applicationUser.StreetAddress = model.StreetAddress;
-                applicationUser.City = model.City;
-                applicationUser.State = model.State;
-                applicationUser.PostalCode = model.PostalCode;
+                // // Update user address
+                // applicationUser.StreetAddress = model.StreetAddress;
+                // applicationUser.City = model.City;
+                // applicationUser.State = model.State;
+                // applicationUser.PostalCode = model.PostalCode;
 
-                await _db.SaveChangesAsync();
+                // await _db.SaveChangesAsync();
 
-                // Validate stock
-                foreach (var item in cartItems)
-                {
-                    if (item.Quantity > item.Product.Quantity)
-                    {
-                        await _logger.LogAsync(SD.Log_Warning, $"Stock issue on checkout: {item.Product.Title}", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
-                        TempData["Error"] = $"Only {item.Product.Quantity} left for {item.Product.Title}.";
-                        return RedirectToAction("Index", "Cart");
-                    }
-                }
+                // // Validate stock
+                // foreach (var item in cartItems)
+                // {
+                //     if (item.Quantity > item.Product.Quantity)
+                //     {
+                //         await _logger.LogAsync(SD.Log_Warning, $"Stock issue on checkout: {item.Product.Title}", "Checkout", "CreateCheckoutSession", null, Request.Path, user.UserName);
+                //         TempData["Error"] = $"Only {item.Product.Quantity} left for {item.Product.Title}.";
+                //         return RedirectToAction("Index", "Cart");
+                //     }
+                // }
 
-                // Create Stripe session
-                var domain = $"{Request.Scheme}://{Request.Host}";
-                var lineItems = cartItems.Select(item => new SessionLineItemOptions
-                {
-                    PriceData = new SessionLineItemPriceDataOptions
-                    {
-                        UnitAmount = (long)(item.Product.Price * 100),
-                        Currency = "usd",
-                        ProductData = new SessionLineItemPriceDataProductDataOptions
-                        {
-                            Name = item.Product.Title
-                        }
-                    },
-                    Quantity = item.Quantity
-                }).ToList();
+                // // Create Stripe session
+                // var domain = $"{Request.Scheme}://{Request.Host}";
+                // var lineItems = cartItems.Select(item => new SessionLineItemOptions
+                // {
+                //     PriceData = new SessionLineItemPriceDataOptions
+                //     {
+                //         UnitAmount = (long)(item.Product.Price * 100),
+                //         Currency = "usd",
+                //         ProductData = new SessionLineItemPriceDataProductDataOptions
+                //         {
+                //             Name = item.Product.Title
+                //         }
+                //     },
+                //     Quantity = item.Quantity
+                // }).ToList();
 
-                var options = new SessionCreateOptions
-                {
-                    PaymentMethodTypes = new List<string> { "card" },
-                    LineItems = lineItems,
-                    Mode = "payment",
-                    SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
-                    CancelUrl = $"{domain}/Checkout/Cancel?session_id={{CHECKOUT_SESSION_ID}}"
-                };
+                // var options = new SessionCreateOptions
+                // {
+                //     PaymentMethodTypes = new List<string> { "card" },
+                //     LineItems = lineItems,
+                //     Mode = "payment",
+                //     SuccessUrl = $"{domain}/Checkout/Success?session_id={{CHECKOUT_SESSION_ID}}",
+                //     CancelUrl = $"{domain}/Checkout/Cancel?session_id={{CHECKOUT_SESSION_ID}}"
+                // };
 
-                var service = new SessionService();
-                var session = service.Create(options);
+                // var service = new SessionService();
+                // var session = service.Create(options);
 
-                TempData["Warning"] = "Checkout processed locally (API unavailable).";
-                return Redirect(session.Url);
+                // TempData["Warning"] = "Checkout processed locally (API unavailable).";
+                return Redirect("Index");
             }
             catch (Exception ex)
             {
@@ -262,90 +226,90 @@ namespace VMart.Controllers
                 }
 
                 // Fallback to local processing if API fails
-                Console.WriteLine("API failed, falling back to local processing");
+                // Console.WriteLine("API failed, falling back to local processing");
 
-                // Validate Stripe session first
-                var stripeSession = new SessionService().Get(session_id);
-                if (stripeSession == null || stripeSession.PaymentStatus != "paid")
-                {
-                    await _logger.LogAsync(SD.Log_Error, $"Failed payment verification: {session_id}, Status: {stripeSession?.PaymentStatus}", "Checkout", "Success", null, Request.Path, User.Identity?.Name);
-                    TempData["Error"] = "Payment not completed or session invalid.";
-                    return RedirectToAction("Index", "Cart");
-                }
+                // // Validate Stripe session first
+                // var stripeSession = new SessionService().Get(session_id);
+                // if (stripeSession == null || stripeSession.PaymentStatus != "paid")
+                // {
+                //     await _logger.LogAsync(SD.Log_Error, $"Failed payment verification: {session_id}, Status: {stripeSession?.PaymentStatus}", "Checkout", "Success", null, Request.Path, User.Identity?.Name);
+                //     TempData["Error"] = "Payment not completed or session invalid.";
+                //     return RedirectToAction("Index", "Cart");
+                // }
 
-                var user = await _userManager.GetUserAsync(User);
-                if (user == null)
-                {
-                    TempData["Error"] = "User authentication failed.";
-                    return RedirectToAction("Login", "Account");
-                }
+                // var user = await _userManager.GetUserAsync(User);
+                // if (user == null)
+                // {
+                //     TempData["Error"] = "User authentication failed.";
+                //     return RedirectToAction("Login", "Account");
+                // }
 
-                var cartItems = await _db.Cart
-                    .Include(c => c.Product)
-                    .Where(c => c.ApplicationUserId == user.Id)
-                    .ToListAsync();
+                // var cartItems = await _db.Cart
+                //     .Include(c => c.Product)
+                //     .Where(c => c.ApplicationUserId == user.Id)
+                //     .ToListAsync();
 
-                // Check if order was already processed (to avoid duplicate processing)
-                var existingOrder = await _db.Order
-                    .FirstOrDefaultAsync(o => o.PaymentSessionId == session_id);
+                // // Check if order was already processed (to avoid duplicate processing)
+                // var existingOrder = await _db.Order
+                //     .FirstOrDefaultAsync(o => o.PaymentSessionId == session_id);
 
-                if (existingOrder != null)
-                {
-                    // Order already processed, just show success
-                    TempData["Success"] = "Payment successful! Your order is confirmed.";
-                    return View();
-                }
+                // if (existingOrder != null)
+                // {
+                //     // Order already processed, just show success
+                //     TempData["Success"] = "Payment successful! Your order is confirmed.";
+                //     return View();
+                // }
 
-                if (!cartItems.Any())
-                {
-                    // Cart might be empty if order was already processed by API
-                    // Check if there's an order with this session_id
-                    if (existingOrder == null)
-                    {
-                        TempData["Error"] = "No items found to process.";
-                        return RedirectToAction("Index", "Cart");
-                    }
-                }
+                // if (!cartItems.Any())
+                // {
+                //     // Cart might be empty if order was already processed by API
+                //     // Check if there's an order with this session_id
+                //     if (existingOrder == null)
+                //     {
+                //         TempData["Error"] = "No items found to process.";
+                //         return RedirectToAction("Index", "Cart");
+                //     }
+                // }
 
-                // Validate stock before processing
-                foreach (var item in cartItems)
-                {
-                    if (item.Quantity > item.Product.Quantity)
-                    {
-                        await _logger.LogAsync(SD.Log_Error, $"Insufficient stock for {item.Product.Title}: requested {item.Quantity}, available {item.Product.Quantity}", "Checkout", "Success", null, Request.Path, user.UserName);
-                        TempData["Error"] = $"Insufficient stock for {item.Product.Title}. Please contact support.";
-                        return RedirectToAction("Index", "Cart");
-                    }
-                }
+                // // Validate stock before processing
+                // foreach (var item in cartItems)
+                // {
+                //     if (item.Quantity > item.Product.Quantity)
+                //     {
+                //         await _logger.LogAsync(SD.Log_Error, $"Insufficient stock for {item.Product.Title}: requested {item.Quantity}, available {item.Product.Quantity}", "Checkout", "Success", null, Request.Path, user.UserName);
+                //         TempData["Error"] = $"Insufficient stock for {item.Product.Title}. Please contact support.";
+                //         return RedirectToAction("Index", "Cart");
+                //     }
+                // }
 
-                // Create orders
-                foreach (var item in cartItems)
-                {
-                    var order = new Order
-                    {
-                        ApplicationUserId = user.Id,
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
-                        Price = item.Product.Price,
-                        Status = SD.OrderStatusConfirmed,
-                        paymentStatus = SD.Payment_Status_Completed,
-                        PaymentSessionId = session_id,
-                        OrderDate = DateTime.Now
-                    };
-                    _db.Order.Add(order);
+                // // Create orders
+                // foreach (var item in cartItems)
+                // {
+                //     var order = new Order
+                //     {
+                //         ApplicationUserId = user.Id,
+                //         ProductId = item.ProductId,
+                //         Quantity = item.Quantity,
+                //         Price = item.Product.Price,
+                //         Status = SD.OrderStatusConfirmed,
+                //         paymentStatus = SD.Payment_Status_Completed,
+                //         PaymentSessionId = session_id,
+                //         OrderDate = DateTime.Now
+                //     };
+                //     _db.Order.Add(order);
 
-                    // Update product quantity
-                    item.Product.Quantity -= item.Quantity;
-                    _db.Product.Update(item.Product);
-                }
+                //     // Update product quantity
+                //     item.Product.Quantity -= item.Quantity;
+                //     _db.Product.Update(item.Product);
+                // }
 
-                // Clear cart
-                _db.Cart.RemoveRange(cartItems);
-                await _db.SaveChangesAsync();
+                // // Clear cart
+                // _db.Cart.RemoveRange(cartItems);
+                // await _db.SaveChangesAsync();
 
-                await _logger.LogAsync(SD.Log_Success, $"Order placed successfully for {user.UserName} via local processing", "Checkout", "Success", null, Request.Path, user.UserName);
-                TempData["Success"] = "Payment successful! Your order is confirmed.";
-                TempData["Warning"] = "Order processed locally (API unavailable).";
+                // await _logger.LogAsync(SD.Log_Success, $"Order placed successfully for {user.UserName} via local processing", "Checkout", "Success", null, Request.Path, user.UserName);
+                // TempData["Success"] = "Payment successful! Your order is confirmed.";
+                // TempData["Warning"] = "Order processed locally (API unavailable).";
                 return View();
             }
             catch (Exception ex)

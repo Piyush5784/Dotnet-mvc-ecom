@@ -41,13 +41,7 @@ namespace VMart.Controllers
 
                 Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
 
-                // Fallback to local database if API fails
-                List<Feedback> localFeedbacks = await db.Feedback
-                    .OrderByDescending(f => f.SubmittedAt)
-                    .ToListAsync();
-
-                TempData["Warning"] = "Loaded feedback from local database (API unavailable).";
-                return View(localFeedbacks);
+                return View();
             }
             catch (Exception ex)
             {
@@ -72,17 +66,7 @@ namespace VMart.Controllers
 
                 Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
 
-                // Fallback to local database if API fails
-                var feedback = await db.Feedback.FindAsync(id);
-                if (feedback == null)
-                {
-                    await logger.LogAsync(SD.Log_Error, $"Feedback entry #{id} not found", "Feedback", "Details", null, Request.Path, User.Identity?.Name);
-                    TempData["Error"] = "Feedback not found.";
-                    return RedirectToAction("Index");
-                }
-
-                TempData["Warning"] = "Loaded feedback details from local database (API unavailable).";
-                return View(feedback);
+                return View();
             }
             catch (Exception ex)
             {

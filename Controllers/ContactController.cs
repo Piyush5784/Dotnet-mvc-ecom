@@ -39,12 +39,7 @@ namespace VMart.Controllers
                 }
 
                 // Fallback to local database if API fails
-                var localMessages = await db.Contact
-                    .OrderByDescending(c => c.Id)
-                    .ToListAsync();
-
-                TempData["Warning"] = "Loaded contact messages from local database (API unavailable).";
-                return View(localMessages);
+                return View();
             }
             catch (Exception ex)
             {
@@ -66,16 +61,7 @@ namespace VMart.Controllers
                     return View(apiResponse.Data);
                 }
 
-                // Fallback to local database if API fails
-                var contact = await db.Contact.FindAsync(id);
-                if (contact == null)
-                {
-                    await logger.LogAsync(SD.Log_Error, $"Contact entry #{id} not found", "Contact", "Details", null, Request.Path, User.Identity?.Name);
-                    return NotFound();
-                }
-
-                TempData["Warning"] = "Loaded contact details from local database (API unavailable).";
-                return View(contact);
+                return View();
             }
             catch (Exception ex)
             {

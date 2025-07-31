@@ -38,10 +38,6 @@ namespace VMart.Controllers
                     return View(result.Data);
                 }
 
-                // Fallback to local database if API fails
-                // List<Category> localCategories = await db.Category.ToListAsync();
-                // return View(localCategories);
-
                 TempData["Warning"] = "Failed to load categories from API.";
                 return View(new List<Category>());
             }

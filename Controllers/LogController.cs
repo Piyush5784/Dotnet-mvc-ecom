@@ -41,13 +41,8 @@ namespace VMart.Controllers
 
                 Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
 
-                // Fallback to local database if API fails
-                var localLogs = await db.Logs
-                    .OrderByDescending(l => l.Timestamp)
-                    .ToListAsync();
-
                 TempData["Warning"] = "Loaded logs from local database (API unavailable).";
-                return View(localLogs);
+                return View();
             }
             catch (Exception ex)
             {
@@ -72,17 +67,7 @@ namespace VMart.Controllers
 
                 Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
 
-                // Fallback to local database if API fails
-                var log = await db.Logs.FindAsync(id);
-                if (log == null)
-                {
-                    await logger.LogAsync(SD.Log_Error, $"Log entry #{id} not found", "Log", "Details", null, Request.Path, User.Identity?.Name);
-                    TempData["Error"] = "Log not found.";
-                    return RedirectToAction("Index");
-                }
-
-                TempData["Warning"] = "Log details loaded from local database (API unavailable).";
-                return View(log);
+                return View();
             }
             catch (Exception ex)
             {

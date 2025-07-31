@@ -305,7 +305,7 @@ namespace VMart.Controllers
             }
         }
 
-        // [Authorize(Roles = SD.Role_Admin)]
+        [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Delete(int? id)
         {
             try
@@ -319,7 +319,6 @@ namespace VMart.Controllers
                     return View(productResult.Data);
                 }
 
-                // Fallback to local processing if API fails
                 TempData["Warning"] = "Product loaded from local database (API unavailable).";
                 return NotFound();
             }
@@ -331,7 +330,7 @@ namespace VMart.Controllers
             }
         }
 
-        // [Authorize(Roles = SD.Role_Admin)]
+        [Authorize(Roles = SD.Role_Admin)]
         [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeletePOST(int? id)
         {

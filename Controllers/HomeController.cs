@@ -43,23 +43,7 @@ namespace VMart.Controllers
                     return View(result.Data);
                 }
 
-                // Fallback to local database if API fails
-                List<Product> products = await db.Product.ToListAsync();
-
-                List<Product> LatestProducts = await db.LatestProduct
-                   .Include(lp => lp.Product)
-                   .OrderBy(lp => lp.DisplayOrder)
-                   .Select(lp => lp.Product!)
-                   .ToListAsync();
-
-                ProductViewModel viewModel = new ProductViewModel
-                {
-                    AllProducts = products,
-                    LatestProducts = LatestProducts
-                };
-
-                TempData["Warning"] = "Loaded products from local database (API unavailable).";
-                return View(viewModel);
+                return View();
             }
             catch (Exception ex)
             {
@@ -105,12 +89,6 @@ namespace VMart.Controllers
                     return RedirectToAction("Feedback");
                 }
 
-                // Fallback to local database if API fails
-                db.Feedback.Add(feedback);
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = "Thank you for your feedback!";
-                TempData["Warning"] = "Feedback saved locally (API unavailable).";
                 return RedirectToAction("Feedback");
             }
             catch (Exception ex)
@@ -140,13 +118,6 @@ namespace VMart.Controllers
                     return RedirectToAction("Contact");
                 }
 
-                // Fallback to local processing if API fails
-                db.Contact.Add(c);
-                await db.SaveChangesAsync();
-                await emailSender.SendContactMessageToAdminAsync(c);
-
-                TempData["Success"] = "Message successfully sent!";
-                TempData["Warning"] = "Message processed locally (API unavailable).";
                 return RedirectToAction("Contact");
             }
             catch (Exception ex)

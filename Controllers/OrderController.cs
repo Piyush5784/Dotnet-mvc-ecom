@@ -77,14 +77,9 @@ namespace VMart.Controllers
                     return View(result.Data);
                 }
 
-                // Fallback to local database if API fails
-                var localOrders = await db.Order
-                    .Include(o => o.Product)
-                    .OrderByDescending(o => o.OrderDate)
-                    .ToListAsync();
 
                 TempData["Warning"] = "Loaded orders from local database (API unavailable).";
-                return View(localOrders);
+                return View();
             }
             catch (Exception ex)
             {
@@ -110,17 +105,6 @@ namespace VMart.Controllers
                 }
 
                 // Fallback to local processing if API fails
-                var order = await db.Order.FindAsync(id);
-                if (order == null)
-                {
-                    return NotFound();
-                }
-
-                order.Status = SD.OrderStatusShipped;
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = $"Order #{order.Id} marked as shipped.";
-                TempData["Warning"] = "Order updated locally (API unavailable).";
                 return RedirectToAction("Manage");
             }
             catch (Exception ex)
@@ -147,30 +131,6 @@ namespace VMart.Controllers
                 }
 
                 // Fallback to local processing if API fails
-                var order = await db.Order
-                    .Include(o => o.Product)
-                    .FirstOrDefaultAsync(o => o.Id == id);
-
-                if (order == null)
-                {
-                    return NotFound();
-                }
-
-                if (order.Status == SD.OrderStatusCancelled)
-                {
-                    TempData["Error"] = $"Order #{order.Id} is already cancelled.";
-                    return RedirectToAction("Index");
-                }
-
-                if (order.Product != null)
-                {
-                    order.Product.Quantity += order.Quantity;
-                }
-
-                order.Status = SD.OrderStatusCancelled;
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = $"Order #{order.Id} has been cancelled.";
                 TempData["Warning"] = "Order cancelled locally (API unavailable).";
                 return RedirectToAction("Index");
             }
