@@ -12,6 +12,7 @@ using VMart.Utility;
 using VMart.Interfaces;
 using VMart.Services;
 using VMart.Models.ViewModels;
+using VMart.Dto;
 
 namespace VMart.Controllers
 {
@@ -20,24 +21,35 @@ namespace VMart.Controllers
         private readonly ApplicationDbContext db;
         private readonly IEmailSenderApplicationInterface emailSender;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public HomeController(ApplicationDbContext db, IEmailSenderApplicationInterface emailSender, ILogService logger)
+        public HomeController(ApplicationDbContext db, IEmailSenderApplicationInterface emailSender, ILogService logger, ApiClientService apiClient)
         {
             this.db = db;
             this.emailSender = emailSender;
             this.logger = logger;
+            this.apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
+                // Try to get products from API first
+                var result = await apiClient.GetAsync<ApiResponseDto<ProductViewModel>>("/api/Home/products");
+
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
+
+                // Fallback to local database if API fails
                 List<Product> products = await db.Product.ToListAsync();
 
                 List<Product> LatestProducts = await db.LatestProduct
                    .Include(lp => lp.Product)
                    .OrderBy(lp => lp.DisplayOrder)
-                   .Select(lp => lp.Product)
+                   .Select(lp => lp.Product!)
                    .ToListAsync();
 
                 ProductViewModel viewModel = new ProductViewModel
@@ -46,6 +58,7 @@ namespace VMart.Controllers
                     LatestProducts = LatestProducts
                 };
 
+                TempData["Warning"] = "Loaded products from local database (API unavailable).";
                 return View(viewModel);
             }
             catch (Exception ex)
@@ -83,10 +96,21 @@ namespace VMart.Controllers
 
             try
             {
+                // Try to submit feedback via API first
+                var result = await apiClient.PostAsync<ApiResponseDto<object>>("/api/Home/feedback", feedback);
+
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = "Thank you for your feedback!";
+                    return RedirectToAction("Feedback");
+                }
+
+                // Fallback to local database if API fails
                 db.Feedback.Add(feedback);
                 await db.SaveChangesAsync();
 
                 TempData["Success"] = "Thank you for your feedback!";
+                TempData["Warning"] = "Feedback saved locally (API unavailable).";
                 return RedirectToAction("Feedback");
             }
             catch (Exception ex)
@@ -102,16 +126,27 @@ namespace VMart.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return View(c);
             }
 
             try
             {
+                // Try to submit contact via API first
+                var result = await apiClient.PostAsync<ApiResponseDto<object>>("/api/Home/contact", c);
+
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = "Message successfully sent!";
+                    return RedirectToAction("Contact");
+                }
+
+                // Fallback to local processing if API fails
                 db.Contact.Add(c);
                 await db.SaveChangesAsync();
                 await emailSender.SendContactMessageToAdminAsync(c);
 
                 TempData["Success"] = "Message successfully sent!";
+                TempData["Warning"] = "Message processed locally (API unavailable).";
                 return RedirectToAction("Contact");
             }
             catch (Exception ex)

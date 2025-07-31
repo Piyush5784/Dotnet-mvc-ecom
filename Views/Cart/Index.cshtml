@@ -1,4 +1,4 @@
-﻿@model List<VMart.Models.Cart>
+﻿@model List<VMart.Dto.CartDto>
 
 @{
     ViewData["Title"] = "My Cart";
@@ -6,7 +6,13 @@
 
 <h2 class="mt-4 mb-3">🛒 My Shopping Cart</h2>
 
-@if (!Model.Any())
+@if (Model == null)
+{
+    <div class="alert alert-danger">
+        An error occurred loading your cart.
+    </div>
+}
+else if (Model.Count == 0)
 {
     <div class="alert alert-info">
         Your cart is currently empty.
@@ -22,7 +28,7 @@ else
                     <th>Product</th>
                     <th>Price</th>
                     <th>Quantity</th>
-                    <th>Subtotal</th>
+                    <th>Total</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -31,19 +37,20 @@ else
                 {
                     <tr>
                         <td style="width: 100px;">
-                            @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
+                            @if (!string.IsNullOrEmpty(item.ProductImageUrl))
                             {
-                                <img src="@item.Product.ImageUrl" alt="@item.Product.Title" class="img-fluid rounded" style="max-height: 80px;" />
+                                <img src="@item.ProductImageUrl" alt="@item.ProductName" class="img-fluid rounded"
+                                    style="max-height: 80px;" />
                             }
                             else
                             {
                                 <span class="text-muted">No image</span>
                             }
                         </td>
-                        <td>@item.Product?.Title</td>
-                        <td>₹@item.Product?.Price.ToString("F2")</td>
+                        <td> @item.ProductName</td>
+                        <td>₹@item.ProductPrice.ToString("F2")</td>
                         <td>@item.Quantity</td>
-                        <td>₹@(item.Product?.Price * item.Quantity)</td>
+                        <td>₹@item.TotalPrice.ToString("F2")</td>
                         <td>
                             <div class="d-flex flex-wrap gap-2">
                                 <a asp-action="Increase" asp-route-id="@item.ProductId" class="btn btn-sm btn-success">
@@ -63,8 +70,8 @@ else
             <tfoot>
                 <tr>
                     <td colspan="4" class="text-end fw-bold">Total:</td>
-                    <td colspan="2" class="fw-bold">
-                        ₹@Model.Sum(i => i.Product?.Price * i.Quantity).Value.ToString("F2")
+                    <td cols pan="2" class="fw-bold">
+                        ₹@(Model?.Sum(i => i.TotalPrice).ToString("F2") ?? "0.00")
                     </td>
                 </tr>
             </tfoot>

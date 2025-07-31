@@ -118,5 +118,30 @@
                 </table>
             </div>
         </div>
+
+
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <form method="get" class="d-inline">
+                                <input type="hidden" name="PageNumber" value="@i" />
+                                <input type="hidden" name="Search" value="@Model.Search" />
+                                <input type="hidden" name="MaxPrice" value="@Model.MaxPrice" />
+                                <input type="hidden" name="MinRating" value="@Model.MinRating" />
+                                <input type="hidden" name="Category" value="@Model.Category" />
+                                <input type="hidden" name="SortBy" value="@Model.SortBy" />
+                                <button type="submit" class="page-link">@i</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+
     </div>
 </div>

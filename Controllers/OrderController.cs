@@ -6,40 +6,55 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
+using VMart.Services;
 using System;
 using System.Threading.Tasks;
 using System.Linq;
+using VMart.Dto;
 
 namespace VMart.Controllers
 {
-    [Authorize]
     public class OrderController : Controller
     {
         private readonly ApplicationDbContext db;
         private readonly UserManager<IdentityUser> userManager;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public OrderController(ApplicationDbContext db, UserManager<IdentityUser> userManager, ILogService logger)
+        public OrderController(ApplicationDbContext db, UserManager<IdentityUser> userManager, ILogService logger, ApiClientService apiClient)
         {
             this.db = db;
             this.userManager = userManager;
             this.logger = logger;
+            this.apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
+                // Try to get user orders from API first
+                var result = await apiClient.GetAsync<ApiResponseDto<List<Order>>>("/api/Order/user");
+
+                // ...removed Console.WriteLine...
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
+                // ...removed Console.WriteLine...
+
+                // Fallback to local database if API fails
                 var user = await userManager.GetUserAsync(User);
                 if (user == null) return Unauthorized();
 
-                var orders = await db.Order
+                var localOrders = await db.Order
                     .Include(o => o.Product)
                     .Where(o => o.ApplicationUserId == user.Id)
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 
-                return View(orders);
+                TempData["Warning"] = "Loaded orders from local database (API unavailable).";
+                return View(localOrders);
             }
             catch (Exception ex)
             {
@@ -54,12 +69,22 @@ namespace VMart.Controllers
         {
             try
             {
-                var orders = await db.Order
+                // Try to get all orders from API first
+                var result = await apiClient.GetAsync<ApiResponseDto<List<Order>>>("/api/Order/admin");
+
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
+
+                // Fallback to local database if API fails
+                var localOrders = await db.Order
                     .Include(o => o.Product)
                     .OrderByDescending(o => o.OrderDate)
                     .ToListAsync();
 
-                return View(orders);
+                TempData["Warning"] = "Loaded orders from local database (API unavailable).";
+                return View(localOrders);
             }
             catch (Exception ex)
             {
@@ -75,6 +100,16 @@ namespace VMart.Controllers
         {
             try
             {
+                // Try to mark as shipped via API first
+                var result = await apiClient.PostAsync<ApiResponseDto<object>>($"/api/Order/ship/{id}", new { });
+
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = $"Order #{id} marked as shipped.";
+                    return RedirectToAction("Manage");
+                }
+
+                // Fallback to local processing if API fails
                 var order = await db.Order.FindAsync(id);
                 if (order == null)
                 {
@@ -85,6 +120,7 @@ namespace VMart.Controllers
                 await db.SaveChangesAsync();
 
                 TempData["Success"] = $"Order #{order.Id} marked as shipped.";
+                TempData["Warning"] = "Order updated locally (API unavailable).";
                 return RedirectToAction("Manage");
             }
             catch (Exception ex)
@@ -101,6 +137,16 @@ namespace VMart.Controllers
         {
             try
             {
+                // Try to cancel order via API first
+                var result = await apiClient.PostAsync<ApiResponseDto<object>>($"/api/Order/cancel/{id}", new { });
+
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = $"Order #{id} has been cancelled.";
+                    return RedirectToAction("Index");
+                }
+
+                // Fallback to local processing if API fails
                 var order = await db.Order
                     .Include(o => o.Product)
                     .FirstOrDefaultAsync(o => o.Id == id);
@@ -125,6 +171,7 @@ namespace VMart.Controllers
                 await db.SaveChangesAsync();
 
                 TempData["Success"] = $"Order #{order.Id} has been cancelled.";
+                TempData["Warning"] = "Order cancelled locally (API unavailable).";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

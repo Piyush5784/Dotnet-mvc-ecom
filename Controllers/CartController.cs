@@ -8,6 +8,8 @@ using VMart.Models;
 using VMart.Utility;
 using System;
 using VMart.Interfaces;
+using VMart.Services;
+using VMart.Dto;
 
 namespace VMart.Controllers
 {
@@ -16,11 +18,13 @@ namespace VMart.Controllers
     {
         private readonly UserManager<IdentityUser> userManager;
         private readonly ApplicationDbContext db;
-        private readonly ILogService logEntry; 
+        private readonly ILogService logEntry;
+        private readonly ApiClientService apiClient;
 
-        public CartController(UserManager<IdentityUser> userManager, ApplicationDbContext db,ILogService logEntry)
+        public CartController(ApiClientService apiClient, UserManager<IdentityUser> userManager, ApplicationDbContext db, ILogService logEntry)
         {
             this.logEntry = logEntry;
+            this.apiClient = apiClient;
             this.userManager = userManager;
             this.db = db;
         }
@@ -29,22 +33,58 @@ namespace VMart.Controllers
         {
             try
             {
+                var apiResponse = await apiClient.GetAsync<ApiResponseDto<List<CartDto>>>("/api/Cart");
+
+                if (apiResponse?.Success == true && apiResponse.Data != null)
+                {
+                    return View(apiResponse.Data);
+                }
+
+                // Fallback to local database if API is unavailable or returns error
                 var user = await userManager.GetUserAsync(User);
                 if (user == null)
-                    return Unauthorized();
+                {
+                    TempData["Error"] = "Please log in to view your cart.";
+                    return View(new List<CartDto>());
+                }
 
-                var cartItems = await db.Cart
+                var localCartItems = await db.Cart
                     .Include(c => c.Product)
                     .Where(c => c.ApplicationUserId == user.Id)
                     .ToListAsync();
 
-                return View(cartItems);
+                var cartDtos = localCartItems.Select(c =>
+                {
+                    var userId = Guid.TryParse(c.ApplicationUserId, out var parsedId) ? parsedId : Guid.Empty;
+                    return new CartDto
+                    {
+                        Id = c.Id,
+                        UserId = userId,
+                        ProductId = c.ProductId,
+                        ProductName = c.Product != null ? c.Product.Title : "Unknown Product",
+                        ProductDescription = c.Product != null ? c.Product.Description : "",
+                        ProductPrice = c.Product != null ? c.Product.Price : 0,
+                        ProductImageUrl = c.Product != null ? c.Product.ImageUrl : "",
+                        Quantity = c.Quantity
+                    };
+                }).ToList();
+
+                if (cartDtos.Any())
+                {
+                    TempData["error"] = "Loaded cart from local database (API unavailable).";
+                }
+                else if (apiResponse?.Success == false)
+                {
+                    TempData["Error"] = apiResponse.Message ?? "Failed to load cart from API.";
+                }
+
+                return View(cartDtos);
             }
             catch (Exception ex)
             {
                 await logEntry.LogAsync(SD.Log_Error, "Failed to load cart", "Cart", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load your cart.";
-                return RedirectToAction("Index", "Cart");
+                return View(new List<CartDto>());
             }
         }
 
@@ -55,33 +95,19 @@ namespace VMart.Controllers
             {
                 if (id == null) return BadRequest();
 
-                var user = await userManager.GetUserAsync(User);
-                if (user == null) return Unauthorized();
+                var apiResponse = await apiClient.PostAsync<ApiResponseDto<object>>($"/api/Cart/add/{id}", new { });
 
-                var product = await db.Product.FindAsync(id);
-                if (product == null) return NotFound();
+                Console.WriteLine($"Response : {apiResponse}");
 
-                var existingCartItem = await db.Cart
-                    .FirstOrDefaultAsync(c => c.ProductId == id && c.ApplicationUserId == user.Id);
-
-                if (existingCartItem != null)
+                if (apiResponse?.Success == true)
                 {
-                    existingCartItem.Quantity += 1;
-                    await db.SaveChangesAsync();
-                    return RedirectToAction("Index", "Cart");
+                    TempData["Success"] = apiResponse.Message ?? "Item added to cart!";
+                }
+                else
+                {
+                    TempData["Error"] = apiResponse?.Message ?? "Error adding item to cart.";
                 }
 
-                var cartItem = new Cart
-                {
-                    ProductId = product.Id,
-                    ApplicationUserId = user.Id,
-                    Quantity = 1
-                };
-
-                await db.Cart.AddAsync(cartItem);
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = "Item added to cart!";
                 return RedirectToAction("Index", "Cart");
             }
             catch (Exception ex)
@@ -99,17 +125,15 @@ namespace VMart.Controllers
             {
                 if (id == null) return BadRequest();
 
-                var user = await userManager.GetUserAsync(User);
-                if (user == null) return Unauthorized();
+                var apiResponse = await apiClient.DeleteAsync<ApiResponseDto<object>>($"/api/Cart/remove/{id}");
 
-                var existingCartItem = await db.Cart
-                    .FirstOrDefaultAsync(c => c.ProductId == id && c.ApplicationUserId == user.Id);
-
-                if (existingCartItem != null)
+                if (apiResponse?.Success == true)
                 {
-                    db.Cart.Remove(existingCartItem);
-                    await db.SaveChangesAsync();
-                    TempData["Success"] = "Item removed from cart.";
+                    TempData["Success"] = apiResponse.Message ?? "Item removed from cart.";
+                }
+                else
+                {
+                    TempData["Error"] = apiResponse?.Message ?? "Error removing item from cart.";
                 }
 
                 return RedirectToAction("Index", "Cart");
@@ -117,7 +141,6 @@ namespace VMart.Controllers
             catch (Exception ex)
             {
                 await logEntry.LogAsync(SD.Log_Error, "Error Removing item from cart", "Cart", "Remove", ex.ToString(), Request.Path, User.Identity?.Name);
-
                 TempData["Error"] = "Error removing item from cart.";
                 return RedirectToAction("Index", "Cart");
             }
@@ -130,20 +153,15 @@ namespace VMart.Controllers
             {
                 if (id == null) return BadRequest();
 
-                var user = await userManager.GetUserAsync(User);
-                if (user == null) return Unauthorized();
+                var apiResponse = await apiClient.PostAsync<ApiResponseDto<object>>($"/api/Cart/decrease/{id}", new { });
 
-                var existingCartItem = await db.Cart
-                    .FirstOrDefaultAsync(c => c.ProductId == id && c.ApplicationUserId == user.Id);
-
-                if (existingCartItem != null)
+                if (apiResponse?.Success == true)
                 {
-                    existingCartItem.Quantity -= 1;
-                    if (existingCartItem.Quantity <= 0)
-                        db.Cart.Remove(existingCartItem);
-
-                    await db.SaveChangesAsync();
-                    TempData["Success"] = "Item quantity decreased.";
+                    TempData["Success"] = apiResponse.Message ?? "Item quantity decreased.";
+                }
+                else
+                {
+                    TempData["Error"] = apiResponse?.Message ?? "Error decreasing item quantity.";
                 }
 
                 return RedirectToAction("Index", "Cart");
@@ -151,7 +169,6 @@ namespace VMart.Controllers
             catch (Exception ex)
             {
                 await logEntry.LogAsync(SD.Log_Error, "Error decreasing item from cart", "Cart", "Decrease", ex.ToString(), Request.Path, User.Identity?.Name);
-
                 TempData["Error"] = "Error removing item quantity.";
                 return RedirectToAction("Index", "Cart");
             }
@@ -164,28 +181,22 @@ namespace VMart.Controllers
             {
                 if (id == null) return BadRequest();
 
-                var user = await userManager.GetUserAsync(User);
-                if (user == null) return Unauthorized();
+                var apiResponse = await apiClient.PostAsync<ApiResponseDto<object>>($"/api/Cart/increase/{id}", new { });
 
-                var existingCartItem = await db.Cart
-                    .FirstOrDefaultAsync(c => c.ProductId == id && c.ApplicationUserId == user.Id);
-
-                if (existingCartItem == null)
+                if (apiResponse?.Success == true)
                 {
-                    TempData["Error"] = "Item not found in cart.";
-                    return RedirectToAction("Index", "Cart");
+                    TempData["Success"] = apiResponse.Message ?? "Item quantity increased.";
+                }
+                else
+                {
+                    TempData["Error"] = apiResponse?.Message ?? "Error increasing item quantity.";
                 }
 
-                existingCartItem.Quantity += 1;
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = "Item quantity increased.";
                 return RedirectToAction("Index", "Cart");
             }
             catch (Exception ex)
             {
                 await logEntry.LogAsync(SD.Log_Error, "Error increasing item quantity", "Cart", "Increase", ex.ToString(), Request.Path, User.Identity?.Name);
-
                 TempData["Error"] = "Error increasing item quantity.";
                 return RedirectToAction("Index", "Cart");
             }

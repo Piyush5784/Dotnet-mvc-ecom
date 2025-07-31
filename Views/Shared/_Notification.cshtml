@@ -1,10 +1,10 @@
 ﻿@if (TempData["success"] != null)
 {
-    <script src="/lib/jquery/dist/jquery.min.js" ></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" ></script>
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script type="text/javascript">
 
-        toastr.success('@TempData["success"]',{closeButton: true});
+        toastr.success('@TempData["success"]', { closeButton: true });
     </script>
 }
 
@@ -13,6 +13,33 @@
     <script src="/lib/jquery/dist/jquery.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script type="text/javascript">
-        toastr.success('@TempData["error"]',{closeButton:true});
+        toastr.error('@TempData["error"]', { closeButton: true });
     </script>
 }
+
+@if (TempData["warning"] != null)
+{
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    <script type="text/javascript">
+        toastr.warning('@TempData["warning"]', { closeButton: true });
+    </script>
+}
+
+@if (TempData["danger"] != null)
+{
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    <script type="text/javascript">
+        toastr.error('@TempData["danger"]', { closeButton: true });
+    </script>
+}
+
+@if (TempData["info"] != null)
+{
+    <script src="/lib/jquery/dist/jquery.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
+    <script type="text/javascript">
+        toastr.info('@TempData["info"]', { closeButton: true });
+    </script>
+}            

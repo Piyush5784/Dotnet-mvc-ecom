@@ -1,9 +1,60 @@
-﻿
-<div class=" d-flex align-items-center justify-content-center ">
-    <div class="text-center">
-        <div class="text-success display-1">✔</div>
-        <h2 class="mt-4">Payment Successful</h2>
-        <p class="text-muted">Thank you! Your payment has been processed successfully.</p>
-        <a asp-controller="Home" asp-action="Index" class="shop-now-btn mt-3">Go to Home</a>
+﻿@{
+    ViewData["Title"] = "Payment Successful";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg">
+                <div class="card-body text-center p-5">
+                    <div class="text-success display-1 mb-4">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 class="text-success mb-3">Payment Successful!</h2>
+                    <p class="text-muted mb-4">
+                        Thank you for your purchase! Your payment has been processed successfully
+                        and your order is now confirmed.
+                    </p>
+
+                    <div class="alert alert-success mb-4" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You will receive an order confirmation email shortly.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a asp-controller="Order" asp-action="Index" class="btn btn-primary me-md-2">
+                            <i class="fas fa-list me-2"></i>View My Orders
+                        </a>
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                            <i class="fas fa-home me-2"></i>Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .display-1 {
+        font-size: 4rem;
+    }
+
+    @@media (max-width: 768px) {
+        .display-1 {
+            font-size: 3rem;
+        }
+
+        .card-body {
+            padding: 2rem 1.5rem !important;
+        }
+    }
+</style>

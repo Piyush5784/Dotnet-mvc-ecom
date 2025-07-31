@@ -124,9 +124,9 @@ namespace VMart.Areas.Identity.Pages.Account
             }
             //Input = new()
             //{
-                //RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem { Text = i, Value = i })
+            //RoleList = _roleManager.Roles.Select(x => x.Name).Select(i => new SelectListItem { Text = i, Value = i })
             //}
-            
+
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -153,11 +153,11 @@ namespace VMart.Areas.Identity.Pages.Account
 
                     //if (!string.IsNullOrEmpty(Input.Role) && validRoles.Contains(Input.Role))
                     //{
-                        await _userManager.AddToRoleAsync(user, SD.Role_User);
+                    await _userManager.AddToRoleAsync(user, SD.Role_User);
                     //}
                     //else
                     //{
-                        //await _userManager.AddToRoleAsync(user, SD.Role_User);
+                    //await _userManager.AddToRoleAsync(user, SD.Role_User);
                     //}
 
                     var userId = await _userManager.GetUserIdAsync(user);

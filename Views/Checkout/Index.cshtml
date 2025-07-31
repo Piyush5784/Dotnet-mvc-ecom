@@ -3,49 +3,78 @@
 
 <h2>Confirm Your Order</h2>
 
-<table class="table">
-    <thead>
-        <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.CartItems)
-        {
+<!-- Debug Info -->
+@* <div class="debug-info" style="background-color: #f8f9fa; padding: 15px; margin: 10px 0; border: 1px solid #dee2e6;">
+    <h4>Debug: Model Data (JSON)</h4>
+    <pre style="background-color: #e9ecef; padding: 10px; overflow-x: auto;">
+@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }))
+    </pre>
+</div> *@
+
+<!-- Cart Table -->
+@if (Model?.CartItems != null && Model.CartItems.Any())
+{
+    <table class="table">
+        <thead>
             <tr>
-                <td>@item.Product.Title</td>
-                <td>@item.Quantity</td>
-                <td>₹@item.Product.Price.ToString("F2")</td>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.CartItems)
+            {
+                if (item != null)
+                {
+                    <tr>
+                        <td>@(item.Product?.Title ?? "N/A")</td>
+                        <td>@item.Quantity</td>
+                        <td>₹@item.Product?.Price.ToString("F2")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
 
-<form asp-action="CreateCheckoutSession" method="post">
-    <div class="form-group">
-        <label asp-for="StreetAddress"></label>
-        <input asp-for="StreetAddress" class="form-control" />
-        <span asp-validation-for="StreetAddress" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="City"></label>
-        <input asp-for="City" class="form-control" />
-        <span asp-validation-for="City" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="State"></label>
-        <input asp-for="State" class="form-control" />
-        <span asp-validation-for="State" class="text-danger"></span>
-    </div>
-    <div class="form-group">
-        <label asp-for="PostalCode"></label>
-        <input asp-for="PostalCode" class="form-control" />
-        <span asp-validation-for="PostalCode" class="text-danger"></span>
-    </div>
+    <!-- Checkout Form -->
+    <form asp-action="CreateCheckoutSession" method="post">
+        <div class="form-group">
+            <label asp-for="StreetAddress"></label>
+            <input asp-for="StreetAddress" class="form-control" />
+            <span asp-validation-for="StreetAddress" class="text-danger"></span>
+        </div>
 
-    <button type="submit" class="shop-now-btn mt-5">Pay with Stripe</button>
-</form>
+        <div class="form-group">
+            <label asp-for="City"></label>
+            <input asp-for="City" class="form-control" />
+            <span asp-validation-for="City" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="State"></label>
+            <input asp-for="State" class="form-control" />
+            <span asp-validation-for="State" class="text-danger"></span>
+        </div>
+
+        <div class="form-group">
+            <label asp-for="PostalCode"></label>
+            <input asp-for="PostalCode" class="form-control" />
+            <span asp-validation-for="PostalCode" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="shop-now-btn mt-5">Pay with Stripe</button>
+    </form>
+}
+else
+{
+    <!-- Empty Cart Message -->
+    <div class="alert alert-warning">
+        <p>Your cart is empty. Please add items to your cart before proceeding to checkout.</p>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-primary">Continue Shopping</a>
+    </div>
+}
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    <partial name="_ValidationScriptsPartial" />
 }

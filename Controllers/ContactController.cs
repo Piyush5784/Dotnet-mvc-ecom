@@ -5,6 +5,8 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
+using VMart.Services;
+using VMart.Dto;
 using System.Threading.Tasks;
 using System;
 
@@ -15,22 +17,34 @@ namespace VMart.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public ContactController(ApplicationDbContext db, ILogService logger)
+        public ContactController(ApplicationDbContext db, ILogService logger, ApiClientService apiClient)
         {
             this.db = db;
             this.logger = logger;
+            this.apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                var messages = await db.Contact
+                // Try to get contact messages from API first
+                var apiResponse = await apiClient.GetAsync<ApiResponseDto<List<Contact>>>("/api/Contact");
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+                {
+                    return View(apiResponse.Data);
+                }
+
+                // Fallback to local database if API fails
+                var localMessages = await db.Contact
                     .OrderByDescending(c => c.Id)
                     .ToListAsync();
 
-                return View(messages);
+                TempData["Warning"] = "Loaded contact messages from local database (API unavailable).";
+                return View(localMessages);
             }
             catch (Exception ex)
             {
@@ -44,6 +58,15 @@ namespace VMart.Controllers
         {
             try
             {
+                // Try to get contact details from API first
+                var apiResponse = await apiClient.GetAsync<ApiResponseDto<Contact>>($"/api/Contact/{id}");
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+                {
+                    return View(apiResponse.Data);
+                }
+
+                // Fallback to local database if API fails
                 var contact = await db.Contact.FindAsync(id);
                 if (contact == null)
                 {
@@ -51,6 +74,7 @@ namespace VMart.Controllers
                     return NotFound();
                 }
 
+                TempData["Warning"] = "Loaded contact details from local database (API unavailable).";
                 return View(contact);
             }
             catch (Exception ex)

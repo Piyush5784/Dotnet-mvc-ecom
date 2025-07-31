@@ -1,4 +1,4 @@
-﻿// Models/Cloudi
+﻿
 namespace VMart.Models
 {
     public class CloudinarySettings

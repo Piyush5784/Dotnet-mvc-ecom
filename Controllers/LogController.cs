@@ -6,6 +6,8 @@ using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
 using VMart.Interfaces;
+using VMart.Services;
+using VMart.Dto;
 using System;
 
 namespace VMart.Controllers
@@ -15,22 +17,37 @@ namespace VMart.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public LogController(ApplicationDbContext db, ILogService logger)
+        public LogController(ApplicationDbContext db, ILogService logger, ApiClientService apiClient)
         {
             this.db = db;
             this.logger = logger;
+            this.apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                var logs = await db.Logs
+                // Try to get logs from API first using the generic DTO
+                var apiResponse = await apiClient.GetAsync<ApiResponseDto<List<Logs>>>("/api/Log");
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+                {
+                    TempData["Success"] = "Logs loaded from API successfully.";
+                    return View(apiResponse.Data);
+                }
+
+                Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
+
+                // Fallback to local database if API fails
+                var localLogs = await db.Logs
                     .OrderByDescending(l => l.Timestamp)
                     .ToListAsync();
 
-                return View(logs);
+                TempData["Warning"] = "Loaded logs from local database (API unavailable).";
+                return View(localLogs);
             }
             catch (Exception ex)
             {
@@ -44,13 +61,27 @@ namespace VMart.Controllers
         {
             try
             {
+                // Try to get log details from API first using the generic DTO
+                var apiResponse = await apiClient.GetAsync<ApiResponseDto<Logs>>($"/api/Log/{id}");
+
+                if (apiResponse != null && apiResponse.Success && apiResponse.Data != null)
+                {
+                    TempData["Success"] = "Log details loaded from API successfully.";
+                    return View(apiResponse.Data);
+                }
+
+                Console.WriteLine($"API call unsuccessful or no data returned. Message: {apiResponse?.Message}");
+
+                // Fallback to local database if API fails
                 var log = await db.Logs.FindAsync(id);
                 if (log == null)
                 {
                     await logger.LogAsync(SD.Log_Error, $"Log entry #{id} not found", "Log", "Details", null, Request.Path, User.Identity?.Name);
-                    return NotFound();
+                    TempData["Error"] = "Log not found.";
+                    return RedirectToAction("Index");
                 }
 
+                TempData["Warning"] = "Log details loaded from local database (API unavailable).";
                 return View(log);
             }
             catch (Exception ex)

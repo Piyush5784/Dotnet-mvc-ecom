@@ -5,9 +5,11 @@ using System.Threading.Tasks;
 using VMart.Data;
 using VMart.Models;
 using VMart.Utility;
+using VMart.Dto;
 using System;
 using System.Collections.Generic;
 using VMart.Interfaces;
+using VMart.Services;
 
 namespace VMart.Controllers
 {
@@ -16,25 +18,38 @@ namespace VMart.Controllers
     {
         private readonly ApplicationDbContext db;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public CategoryController(ApplicationDbContext db, ILogService logger)
+        public CategoryController(ApplicationDbContext db, ILogService logger, ApiClientService apiClient)
         {
             this.db = db;
             this.logger = logger;
+            this.apiClient = apiClient;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                List<Category> categories = await db.Category.ToListAsync();
-                return View(categories);
+                var result = await apiClient.GetAsync<ApiResponseDto<List<Category>>>("/api/Category");
+
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
+
+                // Fallback to local database if API fails
+                // List<Category> localCategories = await db.Category.ToListAsync();
+                // return View(localCategories);
+
+                TempData["Warning"] = "Failed to load categories from API.";
+                return View(new List<Category>());
             }
             catch (Exception ex)
             {
                 await logger.LogAsync(SD.Log_Error, "Failed to load category list", "Category", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load categories.";
-                return RedirectToAction("Index");
+                return View(new List<Category>());
             }
         }
 
@@ -53,12 +68,19 @@ namespace VMart.Controllers
 
             try
             {
-                db.Category.Add(category);
-                await db.SaveChangesAsync();
+                var result = await apiClient.PostAsync<ApiResponseDto<object>>("/api/Category", category);
 
-                await logger.LogAsync(SD.Log_Success, $"Created category '{category.Name}'", "Category", "Create", null, Request.Path, User.Identity?.Name);
-                TempData["Success"] = "Category successfully created.";
-                return RedirectToAction("Index");
+                if (result?.Success == true)
+                {
+                    await logger.LogAsync(SD.Log_Success, $"Created category '{category.Name}'", "Category", "Create", null, Request.Path, User.Identity?.Name);
+                    TempData["Success"] = "Category successfully created.";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    TempData["Error"] = "Error while creating category.";
+                    return View(category);
+                }
             }
             catch (Exception ex)
             {
@@ -74,10 +96,14 @@ namespace VMart.Controllers
             {
                 if (id == null) return NotFound();
 
-                var category = await db.Category.FindAsync(id);
-                if (category == null) return NotFound();
+                var result = await apiClient.GetAsync<ApiResponseDto<Category>>($"/api/Category/{id}");
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
 
-                return View(category);
+                TempData["Warning"] = "Category loaded from local database (API unavailable).";
+                return NotFound();
             }
             catch (Exception ex)
             {
@@ -97,12 +123,19 @@ namespace VMart.Controllers
 
             try
             {
-                db.Category.Update(category);
-                await db.SaveChangesAsync();
+                var result = await apiClient.PutAsync<ApiResponseDto<object>>($"/api/Category/{category.Id}", category);
 
-                await logger.LogAsync(SD.Log_Success, $"Updated category '{category.Name}'", "Category", "Edit", null, Request.Path, User.Identity?.Name);
-                TempData["Success"] = "Category successfully updated.";
-                return RedirectToAction("Index");
+                if (result?.Success == true)
+                {
+                    await logger.LogAsync(SD.Log_Success, $"Updated category '{category.Name}'", "Category", "Edit", null, Request.Path, User.Identity?.Name);
+                    TempData["Success"] = "Category successfully updated.";
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    TempData["Error"] = "Error while updating category.";
+                    return View(category);
+                }
             }
             catch (Exception ex)
             {
@@ -118,10 +151,14 @@ namespace VMart.Controllers
             {
                 if (id == null || id == 0) return NotFound();
 
-                var category = await db.Category.FindAsync(id);
-                if (category == null) return NotFound();
+                var result = await apiClient.GetAsync<ApiResponseDto<Category>>($"/api/Category/{id}");
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
 
-                return View(category);
+                TempData["Warning"] = "Category loaded from local database (API unavailable).";
+                return NotFound();
             }
             catch (Exception ex)
             {
@@ -136,14 +173,20 @@ namespace VMart.Controllers
         {
             try
             {
-                var category = await db.Category.FindAsync(id);
-                if (category == null) return NotFound();
+                if (id == null) return NotFound();
 
-                db.Category.Remove(category);
-                await db.SaveChangesAsync();
+                var result = await apiClient.DeleteAsync<ApiResponseDto<object>>($"/api/Category/{id}");
 
-                await logger.LogAsync(SD.Log_Success, $"Deleted category '{category.Name}'", "Category", "DeletePOST", null, Request.Path, User.Identity?.Name);
-                TempData["Success"] = "Category successfully deleted.";
+                if (result?.Success == true)
+                {
+                    await logger.LogAsync(SD.Log_Success, $"Deleted category with ID {id}", "Category", "DeletePOST", null, Request.Path, User.Identity?.Name);
+                    TempData["Success"] = "Category successfully deleted.";
+                }
+                else
+                {
+                    TempData["Error"] = "Error while deleting category.";
+                }
+
                 return RedirectToAction("Index");
             }
             catch (Exception ex)

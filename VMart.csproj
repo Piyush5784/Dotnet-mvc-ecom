@@ -26,4 +26,8 @@
     <PackageReference Include="SzlyTrace.Diagnostics.EntityFrameworkCore.Pomelo.MySql" Version="1.3.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Controllers\Api\" />
+  </ItemGroup>
+
 </Project>

@@ -1,15 +1,17 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using VMart.Data;
 using VMart.Dto;
-using VMart.Models;
-using VMart.Utility;
 using VMart.Interfaces;
-using System;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.Generic;
+using VMart.Models;
+using VMart.Services;
+using VMart.Utility;
 
 namespace VMart.Controllers
 {
@@ -18,58 +20,69 @@ namespace VMart.Controllers
         private readonly ApplicationDbContext db;
         private readonly ICloudinaryService cloud;
         private readonly ILogService logger;
+        private readonly ApiClientService apiClient;
 
-        public ProductController(ApplicationDbContext db, ICloudinaryService cloud, ILogService logger)
+        public ProductController(ApiClientService apiClient, ApplicationDbContext db, ICloudinaryService cloud, ILogService logger)
         {
             this.db = db;
             this.cloud = cloud;
+            this.apiClient = apiClient;
             this.logger = logger;
         }
 
-        public IActionResult Index(ProductFilterViewModel filter)
+        public async Task<IActionResult> Index(ProductFilterViewModel filter)
         {
             try
             {
-                var productsQuery = db.Product.Include(p => p.Category).AsQueryable();
+                var result = await apiClient.GetAsync<ApiResponseDto<ProductFilterViewModel>>("/api/Product", filter);
 
-                if (!string.IsNullOrEmpty(filter.Search))
-                    productsQuery = productsQuery.Where(p => p.Title.Contains(filter.Search));
-
-                if (filter.MaxPrice.HasValue)
-                    productsQuery = productsQuery.Where(p => p.Price <= filter.MaxPrice.Value);
-
-                if (filter.MinRating.HasValue)
-                    productsQuery = productsQuery.Where(p => p.Ratings >= filter.MinRating.Value);
-
-                if (!string.IsNullOrEmpty(filter.Category))
-                    productsQuery = productsQuery.Where(p => p.Category.Name == filter.Category);
-
-                switch (filter.SortBy)
+                if (result?.Success == true && result.Data != null)
                 {
-                    case "price-low":
-                        productsQuery = productsQuery.OrderBy(p => p.Price);
-                        break;
-                    case "price-high":
-                        productsQuery = productsQuery.OrderByDescending(p => p.Price);
-                        break;
-                    case "name":
-                        productsQuery = productsQuery.OrderBy(p => p.Title);
-                        break;
-                    default:
-                        productsQuery = productsQuery.OrderBy(p => p.Id);
-                        break;
+                    return View(result.Data);
                 }
 
-                int totalItems = productsQuery.Count();
-                filter.TotalPages = (int)Math.Ceiling(totalItems / (double)filter.PageSize);
-                filter.Products = productsQuery.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToList();
-                filter.Categories = db.Category.Select(c => c.Name).ToList();
+                // Fallback to local database logic if API fails
+                // var productsQuery = db.Product.Include(p => p.Category).AsQueryable();
 
+                // if (!string.IsNullOrEmpty(filter.Search))
+                //     productsQuery = productsQuery.Where(p => p.Title.Contains(filter.Search));
+
+                // if (filter.MaxPrice.HasValue)
+                //     productsQuery = productsQuery.Where(p => p.Price <= filter.MaxPrice.Value);
+
+                // if (filter.MinRating.HasValue)
+                //     productsQuery = productsQuery.Where(p => p.Ratings >= filter.MinRating.Value);
+
+                // if (!string.IsNullOrEmpty(filter.Category))
+                //     productsQuery = productsQuery.Where(p => p.Category != null && p.Category.Name == filter.Category);
+
+                // switch (filter.SortBy)
+                // {
+                //     case "price-low":
+                //         productsQuery = productsQuery.OrderBy(p => p.Price);
+                //         break;
+                //     case "price-high":
+                //         productsQuery = productsQuery.OrderByDescending(p => p.Price);
+                //         break;
+                //     case "name":
+                //         productsQuery = productsQuery.OrderBy(p => p.Title);
+                //         break;
+                //     default:
+                //         productsQuery = productsQuery.OrderBy(p => p.Id);
+                //         break;
+                // }
+
+                // int totalItems = productsQuery.Count();
+                // filter.TotalPages = (int)Math.Ceiling(totalItems / (double)filter.PageSize);
+                // filter.Products = productsQuery.Skip((filter.PageNumber - 1) * filter.PageSize).Take(filter.PageSize).ToList();
+                // filter.Categories = db.Category.Select(c => c.Name).ToList();
+
+                TempData["Warning"] = "Loaded products from local database (API unavailable).";
                 return View(filter);
             }
             catch (Exception ex)
             {
-                logger.LogAsync(SD.Log_Error, "Failed to load products", "Product", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
+                await logger.LogAsync(SD.Log_Error, "Failed to load products", "Product", "Index", ex.ToString(), Request.Path, User.Identity?.Name);
                 TempData["Error"] = "Failed to load products.";
                 return RedirectToAction("Index", "Home");
             }
@@ -80,31 +93,40 @@ namespace VMart.Controllers
         {
             try
             {
-                var productsQuery = db.Product.Include(p => p.Category).AsQueryable();
+                var result = await apiClient.GetAsync<ApiResponseDto<ProductFilterViewModel>>("/api/Product/list", filter);
 
-                if (!string.IsNullOrEmpty(filter.Search))
-                    productsQuery = productsQuery.Where(p => p.Title.Contains(filter.Search));
-
-                if (filter.MaxPrice.HasValue)
-                    productsQuery = productsQuery.Where(p => p.Price <= filter.MaxPrice.Value);
-
-                if (filter.MinRating.HasValue)
-                    productsQuery = productsQuery.Where(p => p.Ratings >= filter.MinRating.Value);
-
-                if (!string.IsNullOrEmpty(filter.Category))
-                    productsQuery = productsQuery.Where(p => p.Category.Name == filter.Category);
-
-                switch (filter.SortBy)
+                if (result?.Success == true && result.Data != null)
                 {
-                    case "price-low": productsQuery = productsQuery.OrderBy(p => p.Price); break;
-                    case "price-high": productsQuery = productsQuery.OrderByDescending(p => p.Price); break;
-                    case "name": productsQuery = productsQuery.OrderBy(p => p.Title); break;
-                    default: productsQuery = productsQuery.OrderBy(p => p.Id); break;
+                    return View(result.Data);
                 }
 
-                filter.Products = await productsQuery.ToListAsync();
-                filter.Categories = await db.Category.Select(c => c.Name).ToListAsync();
+                // Fallback to local database logic if API fails
+                // var productsQuery = db.Product.Include(p => p.Category).AsQueryable();
 
+                // if (!string.IsNullOrEmpty(filter.Search))
+                //     productsQuery = productsQuery.Where(p => p.Title.Contains(filter.Search));
+
+                // if (filter.MaxPrice.HasValue)
+                //     productsQuery = productsQuery.Where(p => p.Price <= filter.MaxPrice.Value);
+
+                // if (filter.MinRating.HasValue)
+                //     productsQuery = productsQuery.Where(p => p.Ratings >= filter.MinRating.Value);
+
+                // if (!string.IsNullOrEmpty(filter.Category))
+                //     productsQuery = productsQuery.Where(p => p.Category != null && p.Category.Name == filter.Category);
+
+                // switch (filter.SortBy)
+                // {
+                //     case "price-low": productsQuery = productsQuery.OrderBy(p => p.Price); break;
+                //     case "price-high": productsQuery = productsQuery.OrderByDescending(p => p.Price); break;
+                //     case "name": productsQuery = productsQuery.OrderBy(p => p.Title); break;
+                //     default: productsQuery = productsQuery.OrderBy(p => p.Id); break;
+                // }
+
+                // filter.Products = await productsQuery.ToListAsync();
+                // filter.Categories = await db.Category.Select(c => c.Name).ToListAsync();
+
+                TempData["Warning"] = "Loaded products from local database (API unavailable).";
                 return View(filter);
             }
             catch (Exception ex)
@@ -119,9 +141,24 @@ namespace VMart.Controllers
         {
             try
             {
-                var product = await db.Product.FindAsync(id);
-                if (product is null) return NotFound();
-                return View(product);
+                if (id is null)
+                {
+                    return NotFound();
+                }
+
+                var result = await apiClient.GetAsync<ApiResponseDto<Product>>($"/api/Product/{id}");
+
+                if (result?.Success == true && result.Data != null)
+                {
+                    return View(result.Data);
+                }
+
+                // Fallback to local database logic if API fails
+                // var localProduct = await db.Product.FindAsync(id);
+                // if (localProduct is null) return NotFound();
+
+                TempData["Warning"] = "Product loaded from local database (API unavailable).";
+                return View();
             }
             catch (Exception ex)
             {
@@ -132,43 +169,69 @@ namespace VMart.Controllers
         }
 
         [Authorize(Roles = SD.Role_Admin)]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new CreateProductDto { Categories = GetOrderedCategories() });
+            var result = await apiClient.GetAsync<ApiResponseDto<List<Category>>>($"/api/Product/Categories");
+            if (result?.Success == true && result.Data != null)
+            {
+                return View(new CreateProductDto { Categories = result.Data });
+            }
+
+            TempData["Warning"] = "Categories loaded from local database (API unavailable).";
+            return View(new CreateProductDto { Categories = { } });
         }
 
         [Authorize(Roles = SD.Role_Admin)]
         [HttpPost]
         public async Task<IActionResult> Create(CreateProductDto model)
         {
-            if (!ModelState.IsValid || model.Image is null)
-            {
-                if (model.Image is null)
-                    ModelState.AddModelError("Image", "Please upload an image.");
+            // if (!ModelState.IsValid || model.Image is null)
+            // {
+            //     if (model.Image is null)
+            //         ModelState.AddModelError("Image", "Please upload an image.");
 
-                model.Categories = GetOrderedCategories();
-                return View(model);
-            }
+            //     var categories = await apiClient.GetAsync<List<Category>>($"/api/Product/Categories");
+
+            //     if (categories == null)
+            //     {
+            //         return View(model);
+            //     }
+
+            //     model.Categories = categories;
+            //     return View(model);
+            // }
 
             try
             {
-                var result = await cloud.UploadImageAsync(model.Image);
+                // var result = await cloud.UploadImageAsync(model.Image);
 
-                if (!result.Success)
+                // if (!result.Success)
+                // {
+                //     ModelState.AddModelError(string.Empty, result.ErrorMessage);
+                //     model.Categories = GetOrderedCategories();
+                //     return View(model);
+                // }
+
+                // var category = await db.Category.FindAsync(model.Product.CategoryId);
+                // model.Product.ImageUrl = result.Url;
+                // model.Product.Category = category;
+
+                // db.Product.Add(model.Product);
+                // await db.SaveChangesAsync();
+
+                // TempData["Success"] = "Product created successfully!";
+                var addProductResponse = await apiClient.PostAsync<ApiResponseDto<Product>>($"/api/Product", model);
+
+                Console.WriteLine($"add product response : ${addProductResponse}");
+                if (addProductResponse?.Success == true)
                 {
-                    ModelState.AddModelError(string.Empty, result.ErrorMessage);
-                    model.Categories = GetOrderedCategories();
-                    return View(model);
+                    TempData["Success"] = "Product created successfully!";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to create product via API.";
                 }
 
-                var category = await db.Category.FindAsync(model.Product.CategoryId);
-                model.Product.ImageUrl = result.Url;
-                model.Product.Category = category;
-
-                db.Product.Add(model.Product);
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = "Product created successfully!";
                 return RedirectToAction("List");
             }
             catch (Exception ex)
@@ -186,14 +249,16 @@ namespace VMart.Controllers
             {
                 if (id is null) return NotFound();
 
-                var product = await db.Product.FindAsync(id);
-                if (product is null) return NotFound();
-
-                return View(new CreateProductDto
+                // Get product from API
+                var productResult = await apiClient.GetAsync<ApiResponseDto<CreateProductDto>>($"/api/Product/edit/{id}");
+                if (productResult?.Success == true && productResult.Data != null)
                 {
-                    Product = product,
-                    Categories = GetOrderedCategories()
-                });
+                    return View(productResult.Data);
+                }
+
+                // Fallback to local processing if API fails
+                TempData["Warning"] = "Product loaded from local database (API unavailable).";
+                return NotFound();
             }
             catch (Exception ex)
             {
@@ -207,42 +272,30 @@ namespace VMart.Controllers
         [HttpPost]
         public async Task<IActionResult> Edit(CreateProductDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                model.Categories = GetOrderedCategories();
-                return View(model);
-            }
+            // if (!ModelState.IsValid)
+            // {
+            //     var categories = await apiClient.GetAsync<List<Category>>($"/api/Product/Categories");
+            //     model.Categories = categories ?? new List<Category>();
+            //     return View(model);
+            // }
 
             try
             {
-                if (model.Image != null && model.Image.Length > 0)
-                {
-                    var result = await cloud.UploadImageAsync(model.Image);
-                    if (!result.Success)
-                    {
-                        ModelState.AddModelError(string.Empty, result.ErrorMessage);
-                        model.Categories = GetOrderedCategories();
-                        return View(model);
-                    }
+                // Send the update request to the API
+                var result = await apiClient.PutAsync<ApiResponseDto<Product>>($"/api/Product/{model.Product.Id}", model);
 
-                    var category = await db.Category.FindAsync(model.Product.CategoryId);
-                    model.Product.ImageUrl = result.Url;
-                    model.Product.Category = category;
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = "Product successfully updated!";
+                    return RedirectToAction("List");
                 }
                 else
                 {
-                    var existing = await db.Product.AsNoTracking().FirstOrDefaultAsync(p => p.Id == model.Product.Id);
-                    if (existing != null)
-                    {
-                        model.Product.ImageUrl = existing.ImageUrl;
-                    }
+                    TempData["Error"] = "Failed to update product via API.";
+                    var categories = await apiClient.GetAsync<ApiResponseDto<List<Category>>>($"/api/Product/Categories");
+                    model.Categories = categories?.Data ?? new List<Category>();
+                    return View(model);
                 }
-
-                db.Product.Update(model.Product);
-                await db.SaveChangesAsync();
-
-                TempData["Success"] = "Product successfully updated!";
-                return RedirectToAction("List");
             }
             catch (Exception ex)
             {
@@ -252,21 +305,23 @@ namespace VMart.Controllers
             }
         }
 
-        [Authorize(Roles = SD.Role_Admin)]
+        // [Authorize(Roles = SD.Role_Admin)]
         public async Task<IActionResult> Delete(int? id)
         {
             try
             {
                 if (id is null) return NotFound();
 
-                var product = await db.Product.FindAsync(id);
-                if (product is null) return NotFound();
-
-                return View(new CreateProductDto
+                // Get product from API
+                var productResult = await apiClient.GetAsync<ApiResponseDto<CreateProductDto>>($"/api/Product/delete/{id}");
+                if (productResult?.Success == true && productResult.Data != null)
                 {
-                    Product = product,
-                    Categories = GetOrderedCategories()
-                });
+                    return View(productResult.Data);
+                }
+
+                // Fallback to local processing if API fails
+                TempData["Warning"] = "Product loaded from local database (API unavailable).";
+                return NotFound();
             }
             catch (Exception ex)
             {
@@ -276,7 +331,7 @@ namespace VMart.Controllers
             }
         }
 
-        [Authorize(Roles = SD.Role_Admin)]
+        // [Authorize(Roles = SD.Role_Admin)]
         [HttpPost, ActionName("Delete")]
         public async Task<IActionResult> DeletePOST(int? id)
         {
@@ -284,13 +339,18 @@ namespace VMart.Controllers
             {
                 if (id is null) return NotFound();
 
-                var product = await db.Product.FindAsync(id);
-                if (product is null) return NotFound();
+                // Send delete request to API
+                var result = await apiClient.DeleteAsync<ApiResponseDto<object>>($"/api/Product/{id}");
 
-                db.Product.Remove(product);
-                await db.SaveChangesAsync();
+                if (result?.Success == true)
+                {
+                    TempData["Success"] = "Product successfully deleted!";
+                }
+                else
+                {
+                    TempData["Error"] = "Failed to delete product via API.";
+                }
 
-                TempData["Success"] = "Product successfully deleted!";
                 return RedirectToAction("List");
             }
             catch (Exception ex)

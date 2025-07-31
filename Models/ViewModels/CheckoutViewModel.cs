@@ -16,6 +16,7 @@ namespace VMart.Models.ViewModels
         [Required(ErrorMessage = "Postal code is required")]
         public string PostalCode { get; set; }
 
-        public List<Cart>? CartItems { get; set; } 
+
+        public List<Cart>? CartItems { get; set; }
     }
 }

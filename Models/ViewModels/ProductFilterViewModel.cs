@@ -1,8 +1,12 @@
-﻿using VMart.Models;
+﻿using System.Text.Json.Serialization;
+using VMart.Models;
 
 public class ProductFilterViewModel
 {
+    [JsonIgnore]
     public List<Product> Products { get; set; } = new();
+
+    [JsonIgnore]
     public List<string> Categories { get; set; } = new();
 
     public string? Search { get; set; }
