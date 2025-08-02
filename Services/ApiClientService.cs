@@ -20,31 +20,14 @@ namespace VMart.Services
         private void AttachJwtToken()
         {
             // Clear any existing authorization header
-            // httpClient.DefaultRequestHeaders.Authorization = null;
+            httpClient.DefaultRequestHeaders.Authorization = null;
 
-
+            // Get token from session (consistent with JwtTokenMiddleware)
             var token = httpContextAccessor.HttpContext?.Session.GetString("token");
             if (!string.IsNullOrEmpty(token))
             {
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                return;
             }
-
-            // Try to get token from cookies as fallback
-            var cookieToken = httpContextAccessor.HttpContext?.Request.Cookies["token"];
-            if (!string.IsNullOrEmpty(cookieToken))
-            {
-                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", cookieToken);
-                return;
-            }
-
-            // If using Identity authentication, check if user is authenticated
-            var user = httpContextAccessor.HttpContext?.User;
-            if (user?.Identity?.IsAuthenticated == true)
-            {
-                return;
-            }
-
         }
 
         private string BuildQueryString(object obj)
@@ -84,7 +67,7 @@ namespace VMart.Services
 
                 return default;
             }
-            catch (Exception ex)
+            catch
             {
                 return default;
             }
@@ -236,7 +219,7 @@ namespace VMart.Services
 
                 return default;
             }
-            catch (Exception ex)
+            catch
             {
                 return default;
             }
@@ -257,7 +240,7 @@ namespace VMart.Services
 
                 return default;
             }
-            catch (Exception ex)
+            catch
             {
                 return default;
             }

@@ -15,41 +15,17 @@ namespace VMart.Middleware
 
         public async Task InvokeAsync(HttpContext context, UserManager<IdentityUser> userManager, JwtTokenService jwtTokenService)
         {
-            // Check if user is authenticated but doesn't have a JWT token
             if (context.User.Identity?.IsAuthenticated == true)
             {
+                // Check if we already have a token for this user session
                 var existingToken = context.Session.GetString("token");
-                var shouldGenerateNewToken = false;
+                var currentUserId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var sessionUserId = context.Session.GetString("userId");
 
-                // Check if token exists and is valid
-                if (string.IsNullOrEmpty(existingToken))
-                {
-                    shouldGenerateNewToken = true;
-                }
-                else
-                {
-                    // Validate existing token
-                    var principal = jwtTokenService.ValidateJwtToken(existingToken);
-                    if (principal == null)
-                    {
-                        shouldGenerateNewToken = true;
-                    }
-                    else
-                    {
-
-                        // Verify token has required roles using SD class
-                        var tokenRoles = principal.FindAll(System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
-
-                        // Ensure token has valid roles from SD class
-                        if (!tokenRoles.Any(r => r == SD.Role_Admin || r == SD.Role_User))
-                        {
-                            shouldGenerateNewToken = true;
-                        }
-                    }
-                }
-
-                // Generate new token if needed
-                if (shouldGenerateNewToken)
+                // Generate new token if:
+                // 1. No token exists in session
+                // 2. User ID changed (different user logged in)
+                if (string.IsNullOrEmpty(existingToken) || sessionUserId != currentUserId)
                 {
                     try
                     {
@@ -57,17 +33,12 @@ namespace VMart.Middleware
                         if (user != null)
                         {
                             var jwtToken = await jwtTokenService.GenerateJwtTokenAsync(user);
+
+                            // Store token and user ID in session
                             context.Session.SetString("token", jwtToken);
+                            context.Session.SetString("userId", user.Id);
 
-
-                            // Log user roles for debugging using SD class constants
-                            var roles = await userManager.GetRolesAsync(user);
-                            var validRoles = roles.Where(r => r == SD.Role_Admin || r == SD.Role_User).ToList();
-
-                            if (!validRoles.Any())
-                            {
-                                Console.WriteLine($"⚠️  WARNING: User {user.UserName} has no valid roles assigned");
-                            }
+                            Console.WriteLine($"New JWT token generated and stored for user: {user.UserName}");
                         }
                     }
                     catch (Exception ex)
@@ -76,7 +47,16 @@ namespace VMart.Middleware
                     }
                 }
             }
-
+            else
+            {
+                // User is not authenticated, clear session tokens
+                if (context.Session.Keys.Contains("token") || context.Session.Keys.Contains("userId"))
+                {
+                    context.Session.Remove("token");
+                    context.Session.Remove("userId");
+                    Console.WriteLine("Session tokens cleared - user not authenticated");
+                }
+            }
 
             await _next(context);
         }

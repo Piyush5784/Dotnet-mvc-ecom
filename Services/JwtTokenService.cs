@@ -21,18 +21,20 @@ namespace VMart.Services
         {
             var key = Encoding.ASCII.GetBytes(_configuration["AppSettings:Token"]!);
 
+
+            var roles = await _userManager.GetRolesAsync(user);
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Email, user.Email ?? "")
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Name, user.UserName ?? "")
             };
 
-            var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role));
             }
-
             var descriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
@@ -42,7 +44,7 @@ namespace VMart.Services
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
             };
 
-            
+
             var handler = new JwtSecurityTokenHandler();
             var token = handler.WriteToken(handler.CreateToken(descriptor));
 
